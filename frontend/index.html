@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HabitFlow Pro v3 — Life Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+<!-- ═══════════ AUTH SCREEN ═══════════ -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <rect width="36" height="36" rx="10" fill="url(#ag)"/>
+        <path d="M10 18.5L16 24.5L26 14" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs><linearGradient id="ag" x1="0" y1="0" x2="36" y2="36"><stop stop-color="#4F8EF7"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs>
+      </svg>
+      <div><div class="auth-brand-name">HabitFlow Pro</div><div class="auth-brand-sub">Life Management System</div></div>
+    </div>
+
+    <div id="auth-tabs" class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Login</button>
+      <button class="auth-tab" data-tab="register">Register</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="tab-login" class="auth-form-wrap active">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="login-user" class="form-input" placeholder="Enter username" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-pass" class="form-input" placeholder="Enter password" autocomplete="current-password"/>
+      </div>
+      <div id="login-err" class="auth-err hidden"></div>
+      <button class="btn btn-primary w-full" id="btn-login">Login →</button>
+      <div class="auth-hint">Default admin: <strong>admin / admin123</strong><br/>Default user: <strong>user / user123</strong></div>
+    </div>
+
+    <!-- Register form -->
+    <div id="tab-register" class="auth-form-wrap">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" id="reg-name" class="form-input" placeholder="Your full name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="reg-user" class="form-input" placeholder="Choose username"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="reg-pass" class="form-input" placeholder="Choose password"/>
+      </div>
+      <div id="reg-err" class="auth-err hidden"></div>
+      <button class="btn btn-primary w-full" id="btn-register">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN APP ═══════════ -->
+<div id="app" class="app-shell hidden">
+
+  <!-- ═══ MODALS ═══ -->
+
+  <!-- Confirm Modal -->
+  <div id="confirm-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-icon" id="ci-icon">⚠️</div>
+      <h3 class="modal-title" id="ci-title">Confirm</h3>
+      <p class="modal-msg" id="ci-msg">Are you sure?</p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="ci-cancel">Cancel</button>
+        <button class="btn btn-danger" id="ci-ok">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Habit Modal -->
+  <div id="habit-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-wide" role="dialog" aria-modal="true">
+      <button class="modal-x" id="hm-x">✕</button>
+      <h3 class="modal-title" id="hm-title">Add Habit</h3>
+      <div class="form-grid-3">
+        <div class="form-group span-2">
+          <label class="form-label">Habit Name *</label>
+          <input type="text" id="hm-name" class="form-input" placeholder="e.g. Morning Run" maxlength="50"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji (any)</label>
+          <input type="text" id="hm-emoji" class="form-input text-center text-xl" placeholder="💪" maxlength="4"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="hm-category" class="form-select">
+            <option value="health">💚 Health</option>
+            <option value="fitness">💪 Fitness</option>
+            <option value="learning">📚 Learning</option>
+            <option value="mindfulness">🧘 Mindfulness</option>
+            <option value="work">💻 Work</option>
+            <option value="social">❤️ Social</option>
+            <option value="finance">💰 Finance</option>
+            <option value="other">⭐ Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select id="hm-priority" class="form-select">
+            <option value="high">🔴 High</option>
+            <option value="medium" selected>🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Frequency</label>
+          <select id="hm-freq" class="form-select">
+            <option value="daily" selected>Daily</option>
+            <option value="weekly">Once a week</option>
+            <option value="alternate">Alternate day</option>
+            <option value="2week">2 days/week</option>
+            <option value="15days">Every 15 days</option>
+            <option value="monthly">Once a month</option>
+          </select>
+        </div>
+        <div class="form-group span-3">
+          <label class="form-label">Notes</label>
+          <input type="text" id="hm-notes" class="form-input" placeholder="e.g. Workout lower body, focus on squats…" maxlength="200"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Time</label>
+          <input type="time" id="hm-start" class="form-input"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Time</label>
+          <input type="time" id="hm-end" class="form-input"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reminder (min)</label>
+          <select id="hm-reminder" class="form-select">
+            <option value="0">None</option>
+            <option value="5">5 min</option>
+            <option value="10" selected>10 min</option>
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">1 hour</option>
+          </select>
+        </div>
+        <div class="form-group span-3">
+          <label class="form-label">Accent Color</label>
+          <div class="swatch-row" id="hm-swatches"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="hm-cancel">Cancel</button>
+        <button class="btn btn-primary" id="hm-save">Save Habit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goal Modal -->
+  <div id="goal-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-wide" role="dialog" aria-modal="true">
+      <button class="modal-x" id="gm-x">✕</button>
+      <h3 class="modal-title" id="gm-title">Add Goal</h3>
+      <div class="form-grid-2">
+        <div class="form-group span-2">
+          <label class="form-label">Goal Title *</label>
+          <input type="text" id="gm-title-input" class="form-input" placeholder="e.g. Run a 5K marathon" maxlength="80"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deadline</label>
+          <input type="date" id="gm-deadline" class="form-input"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji</label>
+          <input type="text" id="gm-emoji" class="form-input text-center text-xl" placeholder="🎯" maxlength="4"/>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Why this goal matters</label>
+          <textarea id="gm-why" class="form-input" rows="2" placeholder="Motivation behind this goal…" style="resize:vertical"></textarea>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Custom Reward on Completion</label>
+          <input type="text" id="gm-reward" class="form-input" placeholder="e.g. Buy new shoes, Movie night…" maxlength="100"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="gm-cancel">Cancel</button>
+        <button class="btn btn-primary" id="gm-save">Save Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Journal Modal -->
+  <div id="journal-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-wide" role="dialog" aria-modal="true">
+      <button class="modal-x" id="jm-x">✕</button>
+      <h3 class="modal-title">📔 Daily Journal</h3>
+      <p class="modal-sub" id="jm-date-lbl"></p>
+      <div class="form-grid-2">
+        <div class="form-group span-2">
+          <label class="form-label">Title</label>
+          <input type="text" id="jm-title" class="form-input" placeholder="Today's headline…" maxlength="100"/>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">How was your day? (Mood)</label>
+          <div class="mood-picker" id="jm-mood-picker">
+            <button class="mood-btn" data-mood="5" title="Amazing">😄</button>
+            <button class="mood-btn" data-mood="4" title="Good">😊</button>
+            <button class="mood-btn" data-mood="3" title="Okay">😐</button>
+            <button class="mood-btn" data-mood="2" title="Sad">😔</button>
+            <button class="mood-btn" data-mood="1" title="Angry">😤</button>
+            <button class="mood-btn" data-mood="0" title="Tired">😴</button>
+          </div>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Description / Reflection</label>
+          <textarea id="jm-desc" class="form-input" rows="3" placeholder="Reflect on your day…" style="resize:vertical"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">🏆 Wins Today</label>
+          <textarea id="jm-wins" class="form-input" rows="2" placeholder="What went well?" style="resize:vertical"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">📈 Improvements</label>
+          <textarea id="jm-improve" class="form-input" rows="2" placeholder="What could be better?" style="resize:vertical"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">⚡ Energy Level (1–10)</label>
+          <input type="range" id="jm-energy" min="1" max="10" value="7" class="range-input"/>
+          <span id="jm-energy-val" class="range-lbl">7</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">😰 Stress Level (1–10)</label>
+          <input type="range" id="jm-stress" min="1" max="10" value="5" class="range-input"/>
+          <span id="jm-stress-val" class="range-lbl">5</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="jm-cancel">Cancel</button>
+        <button class="btn btn-primary" id="jm-save">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Request Modal -->
+  <div id="editreq-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <button class="modal-x" id="er-x">✕</button>
+      <div class="modal-icon">🔒</div>
+      <h3 class="modal-title">Request Past Edit</h3>
+      <p class="modal-msg">This date has passed. Submit a reason for admin approval.</p>
+      <div class="form-group" style="margin-top:14px">
+        <label class="form-label">Reason *</label>
+        <textarea id="er-reason" class="form-input" rows="3" placeholder="e.g. Forgot to mark, but I did complete it…" style="resize:vertical"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="er-cancel">Cancel</button>
+        <button class="btn btn-primary" id="er-submit">Submit Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Panel Modal -->
+  <div id="admin-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-xl" role="dialog" aria-modal="true">
+      <button class="modal-x" id="adm-x">✕</button>
+      <h3 class="modal-title">🛡️ Admin Panel</h3>
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-atab="requests">Edit Requests</button>
+        <button class="admin-tab" data-atab="users">Users</button>
+        <button class="admin-tab" data-atab="logs">Change Logs</button>
+      </div>
+      <div id="admin-content"></div>
+    </div>
+  </div>
+
+  <!-- Pomodoro Modal -->
+  <div id="pomo-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <button class="modal-x" id="pomo-x">✕</button>
+      <h3 class="modal-title">⏱️ Pomodoro Timer</h3>
+      <div class="pomo-ring-wrap">
+        <svg class="pomo-svg" viewBox="0 0 140 140">
+          <circle class="pomo-track" cx="70" cy="70" r="58"/>
+          <circle class="pomo-prog" cx="70" cy="70" r="58" id="pomo-arc"/>
+        </svg>
+        <div class="pomo-inner">
+          <div class="pomo-time" id="pomo-time-display">25:00</div>
+          <div class="pomo-phase" id="pomo-phase">Focus</div>
+        </div>
+      </div>
+      <div class="pomo-presets">
+        <button class="pomo-preset" data-sec="30">30s</button>
+        <button class="pomo-preset" data-sec="60">1m</button>
+        <button class="pomo-preset" data-sec="120">2m</button>
+        <button class="pomo-preset" data-sec="300">5m</button>
+        <button class="pomo-preset" data-sec="600">10m</button>
+        <button class="pomo-preset" data-sec="900" >15m</button>
+        <button class="pomo-preset active" data-sec="1500">25m</button>
+        <button class="pomo-preset" data-sec="1800">30m</button>
+        <button class="pomo-preset" data-sec="3600">60m</button>
+        <button class="pomo-preset" data-sec="5400">90m</button>
+        <button class="pomo-preset" data-sec="7200">120m</button>
+      </div>
+      <div class="pomo-controls">
+        <button class="btn btn-ghost btn-sm" id="pomo-reset">↺ Reset</button>
+        <button class="btn btn-primary" id="pomo-toggle">▶ Start</button>
+        <button class="btn btn-ghost btn-sm" id="pomo-skip">Skip ⏭</button>
+      </div>
+      <div class="pomo-session-info">Sessions today: <strong id="pomo-sessions">0</strong></div>
+    </div>
+  </div>
+
+  <!-- Life Tracking Modal -->
+  <div id="life-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <button class="modal-x" id="lm-x">✕</button>
+      <h3 class="modal-title">🌟 Life Check-in</h3>
+      <p class="modal-sub" id="lm-date"></p>
+      <div class="form-group">
+        <label class="form-label">Mood</label>
+        <div class="mood-picker" id="lm-mood">
+          <button class="mood-btn" data-mood="5">😊 Happy</button>
+          <button class="mood-btn" data-mood="4">😐 Normal</button>
+          <button class="mood-btn" data-mood="3">😔 Sad</button>
+          <button class="mood-btn" data-mood="2">😤 Angry</button>
+          <button class="mood-btn" data-mood="1">😴 Tired</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Energy Level: <span id="lm-energy-val">7</span>/10</label>
+        <input type="range" id="lm-energy" min="1" max="10" value="7" class="range-input"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stress Level: <span id="lm-stress-val">5</span>/10</label>
+        <input type="range" id="lm-stress" min="1" max="10" value="5" class="range-input"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="lm-cancel">Cancel</button>
+        <button class="btn btn-primary" id="lm-save">Save Check-in</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+        <rect width="30" height="30" rx="8" fill="url(#sg)"/>
+        <path d="M8 15.5L13 20.5L22 11" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs><linearGradient id="sg" x1="0" y1="0" x2="30" y2="30"><stop stop-color="#4F8EF7"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs>
+      </svg>
+      <div>
+        <div class="brand-name">HabitFlow</div>
+        <div class="brand-ver">Pro v3</div>
+      </div>
+    </div>
+
+    <!-- User info -->
+    <div class="sidebar-user" id="sidebar-user"></div>
+
+    <!-- XP bar -->
+    <div class="xp-widget">
+      <div class="xp-top"><span class="xp-lvl" id="xp-lvl">Lvl 1</span><span class="xp-pts" id="xp-pts">0 XP</span></div>
+      <div class="xp-track"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
+      <div class="xp-badge" id="xp-badge">🌱 Beginner</div>
+    </div>
+
+    <nav class="nav">
+      <a href="#" class="nav-i active" data-s="dashboard"><span>🏠</span><span>Dashboard</span></a>
+      <a href="#" class="nav-i" data-s="tracker"><span>📅</span><span>Tracker</span></a>
+      <a href="#" class="nav-i" data-s="timeline"><span>⏱️</span><span>Timeline</span></a>
+      <a href="#" class="nav-i" data-s="goals"><span>🎯</span><span>Goals</span></a>
+      <a href="#" class="nav-i" data-s="todo"><span>✅</span><span>To-Do</span></a>
+      <a href="#" class="nav-i" data-s="matrix"><span>🧠</span><span>Matrix</span></a>
+      <a href="#" class="nav-i" data-s="analytics"><span>📊</span><span>Analytics</span></a>
+      <a href="#" class="nav-i" data-s="journal"><span>📔</span><span>Journal</span></a>
+      <a href="#" class="nav-i" data-s="life"><span>🌟</span><span>Life</span></a>
+      <a href="#" class="nav-i" data-s="badges"><span>🏅</span><span>Badges</span></a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="theme-row">
+        <span class="theme-lbl">Dark Mode</span>
+        <button class="tog-sw" id="theme-tog"><span class="tog-knob"></span></button>
+      </div>
+      <div class="foot-actions">
+        <button class="btn btn-ghost btn-xs" id="btn-pomo">⏱️ Pomodoro</button>
+        <button class="btn btn-ghost btn-xs" id="btn-admin" id="btn-admin-panel" style="display:none">🛡️ Admin</button>
+      </div>
+      <button class="btn btn-danger btn-xs w-full" id="btn-logout" style="margin-top:8px">← Logout</button>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main" id="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="burger" id="burger"><span></span><span></span><span></span></button>
+      <div class="topbar-center">
+        <div class="clock" id="clock">00:00:00</div>
+        <div class="tdate" id="tdate"></div>
+      </div>
+      <div class="topbar-r">
+        <div class="search-wrap">
+          <span class="s-ico">🔍</span>
+          <input type="text" id="search" class="search-inp" placeholder="Search habits…"/>
+        </div>
+        <button class="icon-btn" id="notif-btn" title="Notifications">🔔<span class="notif-dot" id="notif-dot" hidden></span></button>
+        <button class="btn btn-primary btn-sm" id="btn-add-habit">+ Add Habit</button>
+      </div>
+    </header>
+
+    <!-- PAGE WRAP -->
+    <div class="page-wrap">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <section id="sec-dashboard" class="sec active">
+        <div class="hero-card">
+          <div class="hero-l">
+            <h1 class="greet" id="greet">Good Morning 👋</h1>
+            <p class="quote" id="quote"></p>
+            <div class="hero-acts">
+              <button class="btn btn-white btn-sm" id="btn-journal-today">📔 Journal</button>
+              <button class="btn btn-white btn-sm" id="btn-life-checkin">🌟 Life Check-in</button>
+              <button class="btn btn-white-o btn-sm" id="btn-pomo2">⏱️ Pomodoro</button>
+            </div>
+          </div>
+          <div class="hero-r">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 120 120">
+                <circle class="ring-track" cx="60" cy="60" r="50"/>
+                <circle class="ring-prog" cx="60" cy="60" r="50" id="ring-prog"/>
+              </svg>
+              <div class="ring-inner"><span class="ring-pct" id="ring-pct">0%</span><span class="ring-lbl">Today</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="moti-banner" class="moti-banner hidden"></div>
+
+        <!-- Score summary row -->
+        <div class="score-row">
+          <div class="score-card">
+            <div class="sc-label">Today Score</div>
+            <div class="sc-val" id="sc-today">0%</div>
+            <div class="sc-bar-wrap"><div class="sc-bar green" id="sc-today-bar" style="width:0%"></div></div>
+          </div>
+          <div class="score-card">
+            <div class="sc-label">Weekly Score</div>
+            <div class="sc-val" id="sc-week">0%</div>
+            <div class="sc-bar-wrap"><div class="sc-bar blue" id="sc-week-bar" style="width:0%"></div></div>
+          </div>
+          <div class="score-card">
+            <div class="sc-label">Monthly Score</div>
+            <div class="sc-val" id="sc-month">0%</div>
+            <div class="sc-bar-wrap"><div class="sc-bar purple" id="sc-month-bar" style="width:0%"></div></div>
+          </div>
+          <div class="score-card">
+            <div class="sc-label">Avg Habit Score</div>
+            <div class="sc-val" id="sc-avg">0%</div>
+            <div class="sc-bar-wrap"><div class="sc-bar orange" id="sc-avg-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="stats-grid">
+          <div class="stat-card"><div class="s-ico" style="--ic:#EEF3FE;--icv:#2563EB">📋</div><div><div class="sv" id="sd-total">0</div><div class="sl">Total Habits</div></div></div>
+          <div class="stat-card"><div class="s-ico" style="--ic:#DCFCE7;--icv:#16A34A">✅</div><div><div class="sv" id="sd-done">0/0</div><div class="sl">Done Today</div></div></div>
+          <div class="stat-card"><div class="s-ico" style="--ic:#FFF7ED;--icv:#EA580C">🔥</div><div><div class="sv" id="sd-streak">0</div><div class="sl">Streak</div></div></div>
+          <div class="stat-card"><div class="s-ico" style="--ic:#F5F3FF;--icv:#7C3AED">🏆</div><div><div class="sv" id="sd-best">0</div><div class="sl">Best Streak</div></div></div>
+          <div class="stat-card"><div class="s-ico" style="--ic:#FEE2E2;--icv:#DC2626">❌</div><div><div class="sv" id="sd-missed">0</div><div class="sl">Missed/Month</div></div></div>
+          <div class="stat-card"><div class="s-ico" style="--ic:#FEF3C7;--icv:#D97706">🎯</div><div><div class="sv" id="sd-goals">0</div><div class="sl">Active Goals</div></div></div>
+        </div>
+
+        <!-- Upcoming reminders -->
+        <div class="section-hdr"><h2 class="sec-ttl">⏰ Upcoming Today</h2></div>
+        <div id="upcoming-list" class="upcoming-list"></div>
+
+        <!-- Habit progress -->
+        <div class="section-hdr"><h2 class="sec-ttl">Habit Progress</h2><span class="sec-sub" id="dash-month-lbl"></span></div>
+        <div id="dash-progress" class="progress-list"></div>
+
+        <!-- Life summary -->
+        <div class="section-hdr"><h2 class="sec-ttl">🌟 Life Snapshot</h2></div>
+        <div id="life-snapshot" class="life-snapshot"></div>
+      </section>
+
+      <!-- ═══ TRACKER ═══ -->
+      <section id="sec-tracker" class="sec">
+        <div class="section-hdr">
+          <div class="shl">
+            <h2 class="sec-ttl">Monthly Tracker</h2>
+            <span class="sec-sub" id="tracker-lbl"></span>
+          </div>
+          <div class="tracker-bar">
+            <select id="mon-sel" class="form-select sm"></select>
+            <select id="yr-sel" class="form-select sm"></select>
+            <select id="cat-sel" class="form-select sm"><option value="">All</option><option value="health">💚 Health</option><option value="fitness">💪 Fitness</option><option value="learning">📚 Learning</option><option value="mindfulness">🧘 Mindful</option><option value="work">💻 Work</option><option value="social">❤️ Social</option><option value="finance">💰 Finance</option><option value="other">⭐ Other</option></select>
+            <select id="filter-sel" class="form-select sm">
+              <option value="all">All Status</option>
+              <option value="completed">Completed</option>
+              <option value="missed">Missed</option>
+              <option value="pending">Pending</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" id="btn-csv">📤 CSV</button>
+            <button class="btn btn-ghost btn-sm" id="btn-json">📦 JSON</button>
+            <button class="btn btn-ghost btn-sm" id="btn-imp">📥 Import</button>
+            <input type="file" id="imp-file" accept=".json" style="display:none"/>
+          </div>
+        </div>
+        <div class="filter-pills" id="filter-pills">
+          <button class="pill active" data-pf="all">All</button>
+          <button class="pill" data-pf="high">🔴 High</button>
+          <button class="pill" data-pf="medium">🟡 Med</button>
+          <button class="pill" data-pf="low">🟢 Low</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="tbl">
+            <thead><tr id="tbl-head"></tr></thead>
+            <tbody id="tbl-body"></tbody>
+          </table>
+        </div>
+        <div class="reset-row">
+          <button class="btn btn-warning btn-sm" id="btn-rst-today">🔄 Reset Today</button>
+          <button class="btn btn-warning btn-sm" id="btn-rst-month">🗑️ Reset Month</button>
+          <button class="btn btn-danger btn-sm" id="btn-full-reset">☠️ Full Reset</button>
+        </div>
+      </section>
+
+      <!-- ═══ TIMELINE ═══ -->
+      <section id="sec-timeline" class="sec">
+        <div class="section-hdr"><h2 class="sec-ttl">⏱️ Daily Timeline</h2><span class="sec-sub">Today's routine</span></div>
+        <div id="timeline" class="timeline-wrap"></div>
+        <p class="empty-msg hidden" id="tl-empty">No timed habits. Add habits with start times!</p>
+      </section>
+
+      <!-- ═══ GOALS ═══ -->
+      <section id="sec-goals" class="sec">
+        <div class="section-hdr">
+          <h2 class="sec-ttl">🎯 Goals</h2>
+          <button class="btn btn-primary btn-sm" id="btn-add-goal">+ Add Goal</button>
+        </div>
+        <div id="goals-grid" class="goals-grid"></div>
+      </section>
+
+      <!-- ═══ TO-DO ═══ -->
+      <section id="sec-todo" class="sec">
+        <div class="section-hdr">
+          <h2 class="sec-ttl">✅ To-Do List</h2>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="todo-cat-filter" class="form-select sm">
+              <option value="">All Categories</option>
+              <option value="habits">Habits</option>
+              <option value="tracker">Tracker Tasks</option>
+              <option value="journal">Journaling</option>
+              <option value="life">Life Tracking</option>
+              <option value="notes">Notes</option>
+              <option value="goals">Goals</option>
+              <option value="important">Important</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="btn-add-todo">+ Add Task</button>
+          </div>
+        </div>
+        <div id="todo-list" class="todo-list"></div>
+        <div id="todo-add-row" class="todo-add-row hidden">
+          <input type="text" id="todo-inp" class="form-input" placeholder="New task…" maxlength="120"/>
+          <select id="todo-cat-inp" class="form-select sm">
+            <option value="important">Important</option>
+            <option value="habits">Habits</option>
+            <option value="goals">Goals</option>
+            <option value="life">Life</option>
+            <option value="notes">Notes</option>
+            <option value="other">Other</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="todo-inp-save">Save</button>
+          <button class="btn btn-ghost btn-sm" id="todo-inp-cancel">Cancel</button>
+        </div>
+      </section>
+
+      <!-- ═══ EISENHOWER MATRIX ═══ -->
+      <section id="sec-matrix" class="sec">
+        <div class="section-hdr"><h2 class="sec-ttl">🧠 Eisenhower Matrix</h2><span class="sec-sub">Priority planner</span></div>
+        <div class="matrix-add-row">
+          <input type="text" id="matrix-inp" class="form-input" placeholder="Add task to matrix…" maxlength="100" style="flex:1"/>
+          <select id="matrix-quad" class="form-select sm">
+            <option value="do">🔴 Do First (Urgent+Important)</option>
+            <option value="schedule">📅 Schedule (Important, Not Urgent)</option>
+            <option value="delegate">🤝 Delegate (Urgent, Not Important)</option>
+            <option value="eliminate">🗑️ Eliminate (Neither)</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="matrix-add">Add</button>
+        </div>
+        <div class="matrix-grid">
+          <div class="matrix-quad" id="mq-do">
+            <div class="mq-header do"><span>🔴 Do First</span><small>Urgent + Important</small></div>
+            <div class="mq-items" id="mq-do-items"></div>
+          </div>
+          <div class="matrix-quad" id="mq-schedule">
+            <div class="mq-header schedule"><span>📅 Schedule</span><small>Important, Not Urgent</small></div>
+            <div class="mq-items" id="mq-schedule-items"></div>
+          </div>
+          <div class="matrix-quad" id="mq-delegate">
+            <div class="mq-header delegate"><span>🤝 Delegate</span><small>Urgent, Not Important</small></div>
+            <div class="mq-items" id="mq-delegate-items"></div>
+          </div>
+          <div class="matrix-quad" id="mq-eliminate">
+            <div class="mq-header eliminate"><span>🗑️ Eliminate</span><small>Neither</small></div>
+            <div class="mq-items" id="mq-eliminate-items"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ ANALYTICS ═══ -->
+      <section id="sec-analytics" class="sec">
+        <div class="section-hdr"><h2 class="sec-ttl">📊 Analytics</h2><span class="sec-sub" id="analytics-lbl"></span></div>
+        <div class="analytics-filter-row">
+          <button class="pill active" data-af="month">This Month</button>
+          <button class="pill" data-af="week">This Week</button>
+          <button class="pill" data-af="last">Last Month</button>
+          <button class="pill" data-af="all">All Time</button>
+        </div>
+        <div class="analytics-grid">
+          <div class="a-card"><h3 class="a-ttl">Monthly Heatmap</h3><div id="heatmap" class="heatmap-grid"></div></div>
+          <div class="a-card wide"><h3 class="a-ttl">Per-Habit Breakdown</h3><div id="bar-chart" class="bar-chart"></div></div>
+          <div class="a-card"><h3 class="a-ttl">Day-of-Week Patterns</h3><div id="dow-chart" class="dow-chart"></div></div>
+          <div class="a-card"><h3 class="a-ttl">Mood Trends</h3><div id="mood-chart" class="mood-chart"></div></div>
+          <div class="a-card wide"><h3 class="a-ttl">Score History (30 days)</h3><div id="line-chart" class="line-chart-wrap"></div></div>
+          <div class="a-card"><h3 class="a-ttl">Category Breakdown</h3><div id="pie-chart" class="pie-chart-wrap"></div></div>
+          <div class="a-card">
+            <h3 class="a-ttl">Top Stats</h3>
+            <div id="top-stats" class="top-stats"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ JOURNAL ═══ -->
+      <section id="sec-journal" class="sec">
+        <div class="section-hdr"><h2 class="sec-ttl">📔 Journal</h2><button class="btn btn-primary btn-sm" id="btn-journal2">+ New Entry</button></div>
+        <div id="journal-grid" class="journal-grid"></div>
+      </section>
+
+      <!-- ═══ LIFE TRACKING ═══ -->
+      <section id="sec-life" class="sec">
+        <div class="section-hdr"><h2 class="sec-ttl">🌟 Life Tracking</h2><button class="btn btn-primary btn-sm" id="btn-life2">+ Check-in</button></div>
+        <div class="life-charts-grid">
+          <div class="a-card"><h3 class="a-ttl">Mood History</h3><div id="life-mood-chart" class="mood-chart"></div></div>
+          <div class="a-card"><h3 class="a-ttl">Energy Trend</h3><div id="life-energy-chart" class="life-trend-chart"></div></div>
+          <div class="a-card"><h3 class="a-ttl">Stress Trend</h3><div id="life-stress-chart" class="life-trend-chart"></div></div>
+        </div>
+        <div class="section-hdr" style="margin-top:24px"><h2 class="sec-ttl">Recent Check-ins</h2></div>
+        <div id="life-log" class="life-log"></div>
+      </section>
+
+      <!-- ═══ BADGES ═══ -->
+      <section id="sec-badges" class="sec">
+        <div class="section-hdr"><h2 class="sec-ttl">🏅 Achievements</h2></div>
+        <div id="badges-grid" class="badges-grid"></div>
+      </section>
+
+    </div><!-- /page-wrap -->
+  </main>
+</div><!-- /app -->
+
+<script src="api.js"></script>
+<script src="script.js"></script>
+<script src="users.js"></script>
+<script src="logs.js"></script>
+<script src="approvals.js"></script>
+<script src="notifications.js"></script>
+<script src="profiles.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
