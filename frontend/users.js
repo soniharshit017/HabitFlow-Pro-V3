@@ -449,7 +449,7 @@
     },
     loginUser: function(user){
       HF.normalizeDB();
-      const fullUser = HF.getUserById(user.id) || user;
+      const fullUser = user;
       const loginError = $('login-err');
       if(fullUser.status === 'pending'){
         if(loginError){

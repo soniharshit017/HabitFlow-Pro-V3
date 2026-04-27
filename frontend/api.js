@@ -11,7 +11,7 @@
                   window.location.hostname === '127.0.0.1' ||
                   window.location.protocol === 'file:';
 
-  const API_BASE = isLocal ? 'http://localhost:5000/api' : '/api';
+  const API_BASE = isLocal ? 'http://localhost:8080/api' : '/api';
 
   // ── Token helpers ────────────────────────────────────────────────────────
   const TOKEN_KEY = 'hf_token';

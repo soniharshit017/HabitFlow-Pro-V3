@@ -558,17 +558,33 @@
       const loginError = $('login-err');
       const regError = $('reg-err');
 
-      $('btn-login').addEventListener('click', () => {
+      $('btn-login').addEventListener('click', async () => {
         const identity = $('login-user').value.trim();
         const password = $('login-pass').value.trim();
-        const found = HF.findCredentialUser(identity, password);
-        if(!found){
-          loginError.textContent = 'Invalid username, email, mobile number, or password.';
+        if(!identity || !password){
+          loginError.textContent = 'Username and password are required.';
           loginError.classList.remove('hidden');
           return;
         }
-        loginError.classList.add('hidden');
-        core.getFns().loginUser(found);
+        const btn = $('btn-login');
+        btn.disabled = true; btn.textContent = 'Signing in…';
+        try{
+          const res = await window.HFApi.login(identity, password);
+          btn.disabled = false; btn.textContent = 'Login →';
+          if(res.error){
+            loginError.textContent = res.error;
+            loginError.classList.remove('hidden');
+            return;
+          }
+          loginError.classList.add('hidden');
+          window.HFApi.setToken(res.token);
+          window.DB = {...window.DB, ...res.db};
+          core.getFns().loginUser(res.user);
+        }catch(e){
+          btn.disabled = false; btn.textContent = 'Login →';
+          loginError.textContent = 'Cannot connect to server.';
+          loginError.classList.remove('hidden');
+        }
       });
 
       $('login-pass').addEventListener('keydown', event => {
