@@ -48,10 +48,10 @@ const BADGE_DEFS = [
 ═══════════════════════════════════════════════ */
 let DB = {
   users: [
-    {id:'admin',name:'Admin',username:'admin',password:'admin123',role:'admin'},
-    {id:'u1',name:'User',username:'user',password:'user123',role:'user'},
+    {id:'admin',name:'Admin',username:'admin',role:'super_admin'},
+    {id:'u1',name:'User',username:'user',role:'user'},
   ],
-  habits:{}, records:{}, journal:{}, life:{}, goals:{}, todos:[], matrix:{do:[],schedule:[],delegate:[],eliminate:[]},
+  habits:{}, records:{}, journal:{}, life:{}, goals:{}, todos:{}, matrix:{do:[],schedule:[],delegate:[],eliminate:[]},
   xp:{}, level:{}, earnedBadges:{}, pomoSessions:{},
   editRequests:[], changeLogs:[],
   theme:'light',
@@ -124,6 +124,8 @@ function load(){
   try{
     const r=localStorage.getItem(SK);
     if(r){ const d=JSON.parse(r); DB={...DB,...d}; }
+    // Migrate todos from old array format to object format
+    if(Array.isArray(DB.todos)){ DB.todos={}; }
   }catch(e){}
 }
 
@@ -133,15 +135,32 @@ function load(){
 let _tt;
 function toast(msg,dur=2800){
   const el=$('toast'); el.textContent=msg; el.classList.add('show');
-  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),dur);
+  const announcer=$('sr-announcer'); if(announcer) announcer.textContent=msg;
+  clearTimeout(_tt); _tt=setTimeout(()=>{ el.classList.remove('show'); if(announcer) announcer.textContent=''; },dur);
 }
 
 /* ═══════════════════════════════════════════════
    6. MODALS
 ═══════════════════════════════════════════════ */
-function openM(id){ const m=$(id); m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
-function closeM(id){ const m=$(id); m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
-function confirm(title,msg,icon,onY){
+function openM(id){ const m=$(id); m.classList.add('open'); m.setAttribute('aria-hidden','false'); trapFocus(id); }
+function closeM(id){ const m=$(id); m.classList.remove('open'); m.setAttribute('aria-hidden','true'); if(m._focusHandler) m.removeEventListener('keydown',m._focusHandler); if(m._escHandler) m.removeEventListener('keydown',m._escHandler); const trigger=m._triggerEl; if(trigger) trigger.focus(); }
+
+function trapFocus(modalId){
+  const modal=$(modalId); if(!modal) return;
+  const focusable=modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if(!focusable.length) return;
+  const first=focusable[0], last=focusable[focusable.length-1];
+  modal._focusHandler=(e)=>{
+    if(e.key!=='Tab') return;
+    if(e.shiftKey&&document.activeElement===first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey&&document.activeElement===last){ e.preventDefault(); first.focus(); }
+  };
+  modal._escHandler=(e)=>{ if(e.key==='Escape') closeM(modalId); };
+  modal.addEventListener('keydown',modal._focusHandler);
+  modal.addEventListener('keydown',modal._escHandler);
+  first.focus();
+}
+function confirmDialog(title,msg,icon,onY){
   $('ci-title').textContent=title; $('ci-msg').textContent=msg; $('ci-icon').textContent=icon;
   openM('confirm-modal');
   const ok=$('ci-ok'),cc=$('ci-cancel');
@@ -175,19 +194,21 @@ function initAuth(){
       loginUser(res.user);
     }catch(err){
       btn.disabled=false; btn.textContent='Login →';
-      _showLoginErr('Could not connect to server. Is the backend running on port 5000?');
+      _showLoginErr('Could not connect to server. Is the backend running?');
     }
   });
   $('login-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') $('btn-login').click(); });
 
   // ── Register ─────────────────────────────────────────────────────────────
   $('btn-register').addEventListener('click',async()=>{
-    const name=$('reg-name').value.trim(), u=$('reg-user').value.trim(), p=$('reg-pass').value.trim();
-    if(!name||!u||!p){ _showRegErr('All fields required.'); return; }
+    const name=$('reg-name').value.trim(), email=$('reg-email').value.trim(), u=$('reg-user').value.trim(), p=$('reg-pass').value.trim();
+    if(!name||!email||!u||!p){ _showRegErr('All fields (name, email, username, password) are required.'); return; }
+    if(p.length<8){ _showRegErr('Password must be at least 8 characters.'); return; }
+    if(!/^\S+@\S+\.\S+$/.test(email)){ _showRegErr('Please provide a valid email address.'); return; }
     const btn=$('btn-register');
     btn.disabled=true; btn.textContent='Creating account…';
     try{
-      const res=await window.HFApi.register(name,u,p);
+      const res=await window.HFApi.register(name,email,u,p);
       btn.disabled=false; btn.textContent='Create Account →';
       if(res.error){ _showRegErr(res.error); return; }
       $('reg-err').classList.add('hidden');
@@ -197,7 +218,7 @@ function initAuth(){
       loginUser(res.user);
     }catch(err){
       btn.disabled=false; btn.textContent='Create Account →';
-      _showRegErr('Could not connect to server. Is the backend running on port 5000?');
+      _showRegErr('Could not connect to server. Is the backend running?');
     }
   });
 
@@ -216,6 +237,8 @@ function loginUser(user){
   CU=user;
   $('auth-screen').classList.add('hidden');
   $('app').classList.remove('hidden');
+  // Hide splash screen after login
+  const splash=$('splash-screen'); if(splash) splash.classList.add('done');
   // Initialize user data if first time
   if(!DB.habits[CU.id]) DB.habits[CU.id]=getDefaultHabits();
   if(!DB.records[CU.id]) DB.records[CU.id]={};
@@ -265,15 +288,20 @@ function initApp(){
   renderSelectors(); renderTracker(); updateDashboard();
   renderTimeline(); renderGoals(); renderTodos(); renderMatrix();
   renderJournal(); renderLife(); renderBadges();
-  // Show admin button only for admin
-  const adminBtn=$('btn-admin-panel')||$('btn-admin');
-  if(adminBtn) adminBtn.style.display = CU&&CU.role==='admin'?'inline-flex':'none';
+  if(window.HF&&window.HF.WaterTracker) window.HF.WaterTracker.renderWaterTracker();
+  if(window.HF&&window.HF.MedicineTracker) window.HF.MedicineTracker.renderMedicineTracker();
+  if(window.HF&&window.HF.Timeline) window.HF.Timeline.renderTimelineSection();
+  // Show admin button for all users (access restricted inside panel)
+  const adminBtn=$('btn-admin');
+  if(adminBtn) adminBtn.style.display = 'inline-flex';
   setTimeout(showDailyReminder, 4000);
   checkBadges();
 }
 
 function renderSidebarUser(){
-  $('sidebar-user').innerHTML=`<div class="su-name">${esc(CU.name)}</div><div class="su-role">${CU.role==='admin'?'🛡️ Admin':'👤 User'} · ${esc(CU.username)}</div>`;
+  const roleLabel = CU.role==='super_admin'?'� Super Admin':CU.role==='admin'?'🛡️ Admin':'�👤 User';
+  const emailLine = CU.email ? `<div class="su-role" style="font-size:10px;opacity:.7">${esc(CU.email)}</div>` : '';
+  $('sidebar-user').innerHTML=`<div class="su-name">${esc(CU.name)}</div><div class="su-role">${roleLabel} · ${esc(CU.username)}</div>${emailLine}`;
 }
 
 /* ═══════════════════════════════════════════════
@@ -294,7 +322,8 @@ function updateClock(){
 function updateGreeting(){
   const h=new Date().getHours();
   let g='Good Morning'; if(h>=12&&h<17)g='Good Afternoon'; else if(h>=17)g='Good Evening';
-  $('greet').textContent=g+' 👋';
+  const firstName = CU && CU.name ? CU.name.split(' ')[0] : '';
+  $('greet').textContent = firstName ? `${g}, ${firstName} ✨` : `${g} 👋`;
   const day=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000);
   $('quote').textContent='"'+QUOTES[day%QUOTES.length]+'"';
 }
@@ -306,16 +335,18 @@ function goTo(s){
   $a('.sec').forEach(x=>x.classList.remove('active'));
   $('sec-'+s).classList.add('active');
   $a('.nav-i').forEach(n=>n.classList.toggle('active',n.dataset.s===s));
-  if(window.innerWidth<=768) $('sidebar').classList.remove('open');
+  if(window.innerWidth<=1023) $('sidebar').classList.remove('open');
   if(s==='analytics') renderAnalytics();
   if(s==='badges') renderBadges();
   if(s==='journal') renderJournal();
   if(s==='life') renderLife();
   if(s==='tracker'){ renderSelectors(); renderTracker(); }
-  if(s==='timeline') renderTimeline();
+  if(s==='timeline'){ renderTimeline(); if(window.HF&&window.HF.Timeline) window.HF.Timeline.renderTimelineSection(); }
   if(s==='goals') renderGoals();
   if(s==='todo') renderTodos();
   if(s==='matrix') renderMatrix();
+  if(s==='water'){ if(window.HF&&window.HF.WaterTracker) window.HF.WaterTracker.renderWaterTracker(); }
+  if(s==='medicine'){ if(window.HF&&window.HF.MedicineTracker) window.HF.MedicineTracker.renderMedicineTracker(); }
 }
 
 /* ═══════════════════════════════════════════════
@@ -389,7 +420,7 @@ function saveHabit(){
 
 function deleteHabit(id){
   const h=getHabits().find(x=>x.id===id); if(!h) return;
-  confirm('Delete Habit',`Delete "${h.name}"? All data lost.`,'🗑️',()=>{
+  confirmDialog('Delete Habit',`Delete "${h.name}"? All data lost.`,'🗑️',()=>{
     DB.habits[CU.id]=DB.habits[CU.id].filter(x=>x.id!==id);
     const recs=DB.records[CU.id]||{};
     Object.keys(recs).filter(k=>k.startsWith(id)).forEach(k=>delete recs[k]);
@@ -401,11 +432,17 @@ function deleteHabit(id){
    14. TRACKER
 ═══════════════════════════════════════════════ */
 function renderTracker(){
+  renderTrackerTable();
+  renderTrackerMobile();
+}
+
+function renderTrackerTable(){
   const m=appState.selMonth,y=appState.selYear;
   const days=dIM(m,y), t=tod();
   const search=($('search').value||'').toLowerCase();
   const catF=($('cat-sel')?$('cat-sel').value:'');
   const statF=($('filter-sel')?$('filter-sel').value:'all');
+  const freqF=($('freq-sel')?$('freq-sel').value:'');
   const pillF=($q('.filter-pills .pill.active')||{}).dataset?.pf||'all';
 
   // Build head
@@ -423,6 +460,7 @@ function renderTracker(){
   const habits=getHabits().filter(h=>{
     if(search && !h.name.toLowerCase().includes(search) && !h.emoji.includes(search)) return false;
     if(catF && h.category!==catF) return false;
+    if(freqF && h.repeat!==freqF) return false;
     if(pillF==='high'&&h.priority!=='high') return false;
     if(pillF==='medium'&&h.priority!=='medium') return false;
     if(pillF==='low'&&h.priority!=='low') return false;
@@ -433,6 +471,7 @@ function renderTracker(){
 
   habits.forEach(h=>{
     const tr=document.createElement('tr');
+    if(h.color) tr.style.background = h.color + '15';
     // Habit cell
     const tdH=document.createElement('td'); tdH.className='td-habit';
     const timeStr=h.startTime?m2d(t2m(h.startTime)):'';
@@ -467,7 +506,7 @@ function renderTracker(){
       else if(future_) cls+=' future';
       if(past&&!today_) cls+=' locked';
       const lockIco=(past&&!today_)?'<span class="lock-ico">🔒</span>':'';
-      td.innerHTML=`<div class="${cls}" data-hid="${h.id}" data-d="${d}" role="button" tabindex="0">${ico}${lockIco}</div>`;
+      td.innerHTML=`<div class="${cls}" data-hid="${h.id}" data-d="${d}" role="button" tabindex="0" aria-label="${esc(h.name)} day ${d}: ${v===1?'done':v===2?'missed':v===3?'pending':'not marked'}">${ico}${lockIco}</div>`;
       tr.appendChild(td);
     }
     const pct=days>0?Math.round((done/days)*100):0;
@@ -481,6 +520,33 @@ function renderTracker(){
     tr.innerHTML=`<td colspan="100" class="empty-msg" style="padding:40px">No habits match your filters.</td>`;
     tbody.appendChild(tr);
   }
+}
+
+function renderTrackerMobile(){
+  const el=$('tracker-mobile-list'); if(!el) return;
+  const habits=getHabits();
+  const t=tod();
+  if(!habits.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No habits yet</h3><p>Build your first habit to start tracking your progress.</p><button class="btn btn-primary" onclick="openHabitModal()">+ Create Your First Habit</button></div>'; return; }
+  el.innerHTML=habits.map(h=>{
+    const v=getRec(h.id,t.y,t.m,t.d);
+    const isDone=v===1;
+    return `<div class="mobile-habit-row">
+      <div class="mobile-habit-info">
+        <span class="mobile-habit-emoji">${esc(h.emoji)}</span>
+        <span class="mobile-habit-name">${esc(h.name)}</span>
+      </div>
+      <button class="mobile-habit-toggle ${isDone?'done':''}" onclick="toggleHabitToday('${h.id}')" aria-label="Toggle ${esc(h.name)} ${isDone?'done':'not done'}">${isDone?'✓':'○'}</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleHabitToday(hid){
+  const t=tod();
+  const cur=getRec(hid,t.y,t.m,t.d);
+  const next=(cur+1)%4;
+  setRec(hid,t.y,t.m,t.d,next);
+  if(next===1) addXP(5);
+  save(); renderTracker(); updateDashboard(); checkBadges(); checkMilestones();
 }
 
 function handleCellClick(e){
@@ -588,7 +654,7 @@ function renderDashProgress(){
   const m=appState.selMonth,y=appState.selYear,days=dIM(m,y);
   const el=$('dash-progress'); if(!el) return;
   const habits=getHabits();
-  if(!habits.length){ el.innerHTML='<div class="empty-msg">No habits yet. Click "+ Add Habit"!</div>'; return; }
+  if(!habits.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No habits yet</h3><p>Build your first habit to start tracking your progress.</p><button class="btn btn-primary" onclick="openHabitModal()">+ Create Your First Habit</button></div>'; return; }
   el.innerHTML=habits.map(h=>{
     let done=0; for(let d=1;d<=days;d++) if(getRec(h.id,y,m,d)===1)done++;
     const pct=days>0?Math.round((done/days)*100):0;
@@ -683,34 +749,173 @@ function saveGoal(){
 }
 
 function renderGoals(){
-  const el=$('goals-grid'); if(!el) return;
-  const goals=getGoals();
-  if(!goals.length){ el.innerHTML='<div class="empty-msg">No goals yet. Click "+ Add Goal" to start!</div>'; return; }
-  el.innerHTML=goals.map(g=>{
-    const pct=parseInt(g.progress||0), done_=pct>=100;
-    const dl=g.deadline?new Date(g.deadline).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No deadline';
-    return `<div class="goal-card ${done_?'done-goal':''}">
-      <div class="gc-top">
-        <span class="gc-emoji">${esc(g.emoji)}</span>
-        <div class="gc-acts">
-          <button class="hc-btn" data-gact="edit" data-gid="${g.id}" title="Edit">✏️</button>
-          <button class="hc-btn del" data-gact="del" data-gid="${g.id}" title="Delete">🗑️</button>
-        </div>
-      </div>
-      <div class="gc-title">${esc(g.title)}</div>
-      ${g.why?`<div class="gc-why">💡 ${esc(g.why)}</div>`:''}
-      <div class="gc-progress-wrap">
-        <div class="gc-progress-bar-outer">
-          <div class="gc-progress-bar" style="width:${pct}%;background:${done_?'var(--ok)':'var(--pri)'}"></div>
-        </div>
-        <div class="gc-progress-label"><span>${pct}% complete</span><input type="number" class="gc-pct-input" min="0" max="100" value="${pct}" data-update-goal="${g.id}" placeholder="%"/></div>
-      </div>
-      <div class="gc-deadline">📅 ${dl}</div>
-      ${g.reward?`<div class="gc-reward">🎁 Reward: ${esc(g.reward)}</div>`:''}
-      ${done_?`<div style="color:var(--ok);font-weight:700;font-size:13px;margin-top:8px">🏆 GOAL ACHIEVED!</div>`:''}
-    </div>`;
-  }).join('');
+  if (window.renderGoals && typeof window.renderGoals === 'function' && window.renderGoals !== renderGoals) {
+    return window.renderGoals();
+  }
+  const el=document.getElementById('goals-grid');
+  if(el) el.innerHTML='<div class="empty-state"><p>Loading new Goals UI... Please refresh the page if this persists.</p></div>';
 }
+
+let _currentGoalId = null;
+
+function openGoalDetail(gid) {
+  _currentGoalId = gid;
+  const g=getGoals().find(x=>x.id===gid);
+  if(!g) return;
+  
+  $a('.sec').forEach(x=>x.classList.remove('active'));
+  $('sec-goal-detail').classList.add('active');
+  
+  const tasks=g.tasks||[];
+  const total=tasks.length;
+  const doneCount=tasks.filter(t=>t.done).length;
+  const pct=total>0?Math.round((doneCount/total)*100):parseInt(g.progress||0);
+  const dl=g.deadline?new Date(g.deadline).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No deadline';
+  
+  $('gd-header').innerHTML = `
+    <div style="display:flex; align-items:center; gap:var(--s4); flex-wrap:wrap;">
+      <div style="font-size:48px; line-height:1;">${esc(g.emoji)}</div>
+      <div style="flex:1; min-width:200px;">
+        <h2 style="margin:0; font-size:24px; color:var(--tp);">${esc(g.title)}</h2>
+        <div style="color:var(--ts); font-size:14px; margin-top:4px;">📅 ${dl} ${g.reward?` • 🎁 ${esc(g.reward)}`:''}</div>
+        ${g.why?`<div style="color:var(--ts); font-size:14px; margin-top:4px; font-style:italic;">💡 "${esc(g.why)}"</div>`:''}
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:24px; font-weight:bold; color:${pct>=100?'var(--ok)':'var(--pri)'}">${pct}%</div>
+        <div style="font-size:12px; color:var(--ts);">Completed</div>
+      </div>
+    </div>
+    <div class="gc-progress-bar-outer" style="margin-top:var(--s4);">
+      <div class="gc-progress-bar" style="width:${pct}%;background:${pct>=100?'var(--ok)':'var(--pri)'}"></div>
+    </div>
+  `;
+  
+  $('btn-gd-edit').onclick = () => openGoalModal(gid);
+  
+  renderGoalTasks();
+  renderGoalTimeline();
+  renderGoalNotifications();
+}
+
+function renderGoalTasks() {
+  const g=getGoals().find(x=>x.id===_currentGoalId);
+  if(!g) return;
+  const el=$('gd-tasks-list');
+  const tasks=g.tasks||[];
+  
+  if(!tasks.length) {
+    el.innerHTML = '<div class="empty-state compact"><div class="empty-state-icon">✅</div><p>No tasks added for this goal yet.</p></div>';
+    return;
+  }
+  
+  el.innerHTML = tasks.map(t=>`
+    <div class="todo-item ${t.done?'done-todo':''}" style="margin-bottom:8px;">
+      <div class="todo-check ${t.done?'checked':''}" onclick="toggleGoalTask('${t.id}')">${t.done?'✓':''}</div>
+      <span class="todo-text" style="flex:1">${esc(t.text)}</span>
+      ${t.date?`<span class="todo-cat-badge" style="background:var(--bg3)">📅 ${new Date(t.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>`:''}
+      <button class="todo-del" onclick="deleteGoalTask('${t.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderGoalTimeline() {
+  const g=getGoals().find(x=>x.id===_currentGoalId);
+  if(!g) return;
+  const el=$('gd-timeline');
+  const tasks=(g.tasks||[]).filter(t=>t.date).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  
+  if(!tasks.length) {
+    el.innerHTML = '<div class="empty-msg" style="padding:16px;">No tasks with deadlines. Add dates to your tasks to see the timeline!</div>';
+    return;
+  }
+  
+  el.innerHTML = tasks.map(t=>`
+    <div class="tl-item ${t.done?'done-i':''}">
+      <div class="tl-time">${new Date(t.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+      <div class="tl-dot"></div>
+      <div class="tl-info">
+        <div class="tl-name" style="${t.done?'text-decoration:line-through;opacity:0.6':''}">${esc(t.text)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderGoalNotifications() {
+  const g=getGoals().find(x=>x.id===_currentGoalId);
+  if(!g) return;
+  const el=$('gd-notifications');
+  const tasks=g.tasks||[];
+  
+  let notifs = [];
+  
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  if(g.deadline) {
+    const dl = new Date(g.deadline);
+    const diff = Math.floor((dl - today)/(1000*60*60*24));
+    if(diff < 0) notifs.push('⚠️ Goal deadline has passed!');
+    else if(diff === 0) notifs.push('🚨 Goal deadline is TODAY!');
+    else if(diff <= 7) notifs.push(`⏳ Goal deadline is approaching in ${diff} days.`);
+  }
+  
+  const overdueTasks = tasks.filter(t=>!t.done && t.date && new Date(t.date) < today);
+  if(overdueTasks.length > 0) {
+    notifs.push(`🔴 You have ${overdueTasks.length} overdue task(s) for this goal.`);
+  }
+  
+  const todayTasks = tasks.filter(t=>!t.done && t.date && new Date(t.date).getTime() === today.getTime());
+  if(todayTasks.length > 0) {
+    notifs.push(`🔔 ${todayTasks.length} task(s) are due today.`);
+  }
+  
+  if(!notifs.length) {
+    el.innerHTML = '<div style="opacity:0.7; padding:var(--s3);">No new notifications. You are on track! 🎉</div>';
+  } else {
+    el.innerHTML = notifs.map(n=>`<div style="margin-bottom:8px; padding:var(--s2) var(--s3); background:var(--bg3); border-radius:var(--r-md);">${n}</div>`).join('');
+  }
+}
+
+function addGoalTask() {
+  const text = $('gd-new-task').value.trim();
+  const date = $('gd-new-task-date').value;
+  if(!text) return;
+  
+  const g=getGoals().find(x=>x.id===_currentGoalId);
+  if(!g) return;
+  
+  if(!g.tasks) g.tasks = [];
+  g.tasks.push({ id: uid(), text, date, done: false });
+  
+  $('gd-new-task').value = '';
+  $('gd-new-task-date').value = '';
+  
+  save();
+  openGoalDetail(_currentGoalId); // Re-render everything
+  toast('Task added!');
+}
+
+function toggleGoalTask(tid) {
+  const g=getGoals().find(x=>x.id===_currentGoalId);
+  if(!g || !g.tasks) return;
+  const t = g.tasks.find(x=>x.id===tid);
+  if(!t) return;
+  
+  t.done = !t.done;
+  save();
+  openGoalDetail(_currentGoalId);
+}
+
+function deleteGoalTask(tid) {
+  const g=getGoals().find(x=>x.id===_currentGoalId);
+  if(!g || !g.tasks) return;
+  
+  g.tasks = g.tasks.filter(x=>x.id!==tid);
+  save();
+  openGoalDetail(_currentGoalId);
+  toast('Task deleted');
+}
+
 
 /* ═══════════════════════════════════════════════
    18. TO-DO
@@ -719,7 +924,7 @@ function renderTodos(){
   const el=$('todo-list'); if(!el) return;
   const cf=$('todo-cat-filter')?$('todo-cat-filter').value:'';
   const todos=(getTodos()||[]).filter(t=>!cf||t.cat===cf);
-  if(!todos.length){ el.innerHTML='<div class="empty-msg" style="padding:24px">No tasks. Click "+ Add Task" to start!</div>'; return; }
+  if(!todos.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">✅</div><h3>No tasks</h3><p>Add tasks to organize your day with the Eisenhower Matrix.</p><button class="btn btn-primary" onclick="$(\'todo-add-row\').classList.remove(\'hidden\'); setTimeout(()=>$(\'todo-inp\').focus(),100);">+ Add Task</button></div>'; return; }
   el.innerHTML=todos.map(t=>`
     <div class="todo-item ${t.done?'done-todo':''}" data-tid="${t.id}">
       <div class="todo-check ${t.done?'checked':''}" data-tcheck="${t.id}">${t.done?'✓':''}</div>
@@ -905,7 +1110,7 @@ function saveJournal(){
 function renderJournal(){
   const el=$('journal-grid'); if(!el) return;
   const entries=Object.entries(getJournal()).filter(([,v])=>v.title||v.desc||v.mood!==undefined).sort(([a],[b])=>b.localeCompare(a));
-  if(!entries.length){ el.innerHTML='<div class="empty-msg">No journal entries yet. Start from the Dashboard!</div>'; return; }
+  if(!entries.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">📔</div><h3>No journal entries yet</h3><p>Reflect on your day to improve mindfulness and track growth.</p><button class="btn btn-primary" onclick="openJournalModal()">+ Write First Entry</button></div>'; return; }
   el.innerHTML=entries.map(([dk_,v])=>{
     const ml=v.mood!==undefined?MOOD_MAP[v.mood]:null;
     return `<div class="jc">
@@ -950,7 +1155,7 @@ function renderLife(){
   // Log
   const el=$('life-log'); if(!el) return;
   const entries=Object.entries(getLife()).sort(([a],[b])=>b.localeCompare(a)).slice(0,20);
-  if(!entries.length){ el.innerHTML='<div class="empty-msg">No life check-ins yet.</div>'; return; }
+  if(!entries.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">🌟</div><h3>No life check-ins yet</h3><p>Track your mood, energy, and stress to understand your wellbeing.</p><button class="btn btn-primary" onclick="openLifeModal()">+ First Check-in</button></div>'; return; }
   el.innerHTML=entries.map(([dk_,v])=>{
     const ml=v.mood!==undefined?MOOD_MAP[v.mood]:null;
     return `<div class="life-log-item"><div class="lli-mood">${ml?ml.e:'😶'}</div><div class="lli-info"><div class="lli-date">${fmtDateKey(dk_)}</div><div class="lli-vals">${ml?ml.l+' · ':''} ⚡ Energy: ${v.energy||'—'} · 😰 Stress: ${v.stress||'—'}</div></div></div>`;
@@ -1081,21 +1286,21 @@ function renderAdminContent(){
 ═══════════════════════════════════════════════ */
 function resetToday(){
   const t=tod();
-  confirm('Reset Today',`Clear today's entries?`,'🔄',()=>{
+  confirmDialog('Reset Today',`Clear today's entries?`,'🔄',()=>{
     getHabits().forEach(h=>setRec(h.id,t.y,t.m,t.d,0));
     save(); renderTracker(); updateDashboard(); toast('🔄 Today cleared!');
   });
 }
 function resetMonth(){
   const m=appState.selMonth,y=appState.selYear,ms=String(m+1).padStart(2,'0');
-  confirm('Reset Month',`Clear all of ${MONTHS[m]} ${y}?`,'🗑️',()=>{
+  confirmDialog('Reset Month',`Clear all of ${MONTHS[m]} ${y}?`,'🗑️',()=>{
     const r=DB.records[CU.id]||{};
     Object.keys(r).filter(k=>k.includes(`_${y}_${ms}_`)).forEach(k=>delete r[k]);
     save(); renderTracker(); updateDashboard(); toast('🗑️ Month cleared!');
   });
 }
 function fullReset(){
-  confirm('Full Reset','Delete ALL data? This cannot be undone!','☠️',()=>{
+  confirmDialog('Full Reset','Delete ALL data? This cannot be undone!','☠️',()=>{
     DB.habits[CU.id]=[]; DB.records[CU.id]={}; DB.goals[CU.id]=[];
     DB.todos[CU.id]=[]; DB.journal[CU.id]={}; DB.life[CU.id]={};
     DB.xp[CU.id]=0; DB.earnedBadges[CU.id]=[]; DB.pomoSessions[CU.id]=0;
@@ -1186,8 +1391,10 @@ function bindEvents(){
   // Month/year selectors
   $('mon-sel').addEventListener('change',e=>{ appState.selMonth=parseInt(e.target.value); save(); renderTracker(); updateDashboard(); });
   $('yr-sel').addEventListener('change',e=>{ appState.selYear=parseInt(e.target.value); save(); renderTracker(); updateDashboard(); });
+  $('yr-sel').addEventListener('keydown',e=>{ if(e.key==='Enter'){ appState.selYear=parseInt(e.target.value); save(); renderTracker(); updateDashboard(); }});
   $('cat-sel').addEventListener('change',()=>renderTracker());
   $('filter-sel').addEventListener('change',()=>renderTracker());
+  if($('freq-sel')) $('freq-sel').addEventListener('change',()=>renderTracker());
 
   // Filter pills
   $a('#filter-pills .pill').forEach(p=>p.addEventListener('click',()=>{ $a('#filter-pills .pill').forEach(x=>x.classList.remove('active')); p.classList.add('active'); renderTracker(); }));
@@ -1204,23 +1411,23 @@ function bindEvents(){
   $('btn-imp').addEventListener('click',()=>$('imp-file').click());
   $('imp-file').addEventListener('change',e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=''; });
 
-  // Goals
-  $('btn-add-goal').addEventListener('click',()=>openGoalModal());
-  $('gm-save').addEventListener('click',saveGoal);
-  $('gm-cancel').addEventListener('click',()=>closeM('goal-modal'));
-  $('gm-x').addEventListener('click',()=>closeM('goal-modal'));
-  $('goals-grid').addEventListener('click',e=>{
-    const ea=e.target.closest('[data-gact]'); if(!ea) return;
-    const{gact,gid}=ea.dataset;
-    if(gact==='edit') openGoalModal(gid);
-    if(gact==='del') confirm('Delete Goal',`Delete this goal?`,'🗑️',()=>{ DB.goals[CU.id]=DB.goals[CU.id].filter(g=>g.id!==gid); save(); renderGoals(); updateDashboard(); toast('Deleted'); });
-  });
-  $('goals-grid').addEventListener('change',e=>{
-    const inp=e.target.closest('[data-update-goal]'); if(!inp) return;
-    const gid=inp.dataset.updateGoal;
-    const g=DB.goals[CU.id].find(x=>x.id===gid);
-    if(g){ g.progress=Math.max(0,Math.min(100,parseInt(inp.value)||0)); if(g.progress>=100) toast('🎉 Goal Achieved! Reward yourself: '+(g.reward||'Great job!')); save(); renderGoals(); updateDashboard(); checkBadges(); }
-  });
+  // Goals — handled by goals.js module via HFCore.override & bindGoalEvents
+  // $('btn-add-goal').addEventListener('click',()=>openGoalModal());
+  // $('gm-save').addEventListener('click',saveGoal);
+  // $('gm-cancel').addEventListener('click',()=>closeM('goal-modal'));
+  // $('gm-x').addEventListener('click',()=>closeM('goal-modal'));
+  // $('goals-grid').addEventListener('click',e=>{
+  //   const ea=e.target.closest('[data-gact]'); if(!ea) return;
+  //   const{gact,gid}=ea.dataset;
+  //   if(gact==='edit') openGoalModal(gid);
+  //   if(gact==='del') confirm('Delete Goal',`Delete this goal?`,'🗑️',()=>{ DB.goals[CU.id]=DB.goals[CU.id].filter(g=>g.id!==gid); save(); renderGoals(); updateDashboard(); toast('Deleted'); });
+  // });
+  // $('goals-grid').addEventListener('change',e=>{
+  //   const inp=e.target.closest('[data-update-goal]'); if(!inp) return;
+  //   const gid=inp.dataset.updateGoal;
+  //   const g=DB.goals[CU.id].find(x=>x.id===gid);
+  //   if(g){ g.progress=Math.max(0,Math.min(100,parseInt(inp.value)||0)); if(g.progress>=100) toast('🎉 Goal Achieved! Reward yourself: '+(g.reward||'Great job!')); save(); renderGoals(); updateDashboard(); checkBadges(); }
+  // });
 
   // Journal
   $('btn-journal-today').addEventListener('click',()=>openJournalModal());
@@ -1259,7 +1466,7 @@ function bindEvents(){
   });
 
   // Admin panel
-  const adminPanelBtn=document.querySelector('[id="btn-admin-panel"]')||document.querySelector('[id="btn-admin"]');
+  const adminPanelBtn=$('btn-admin');
   if(adminPanelBtn) adminPanelBtn.addEventListener('click',openAdmin);
   $('adm-x').addEventListener('click',()=>closeM('admin-modal'));
   $a('.admin-tab').forEach(t=>t.addEventListener('click',()=>{ $a('.admin-tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); appState.adminTab=t.dataset.atab; renderAdminContent(); }));
@@ -1321,7 +1528,6 @@ function bindEvents(){
   $a('.analytics-filter-row .pill').forEach(p=>p.addEventListener('click',()=>{ $a('.analytics-filter-row .pill').forEach(x=>x.classList.remove('active')); p.classList.add('active'); appState.anaFilter=p.dataset.af; renderAnalytics(); }));
 
   // Notifications
-  $('btn-pomo2').addEventListener('click',openPomo);
   document.getElementById('request-notif') && document.getElementById('request-notif').addEventListener('click',reqNotif);
   $('notif-btn').addEventListener('click',reqNotif);
 
@@ -1348,6 +1554,8 @@ window.HFCore = {
   getDB: () => DB,
   getCurrentUser: () => CU,
   getAppState: () => appState,
+  save,
+  toast,
   getFns: () => ({
     load,
     save,
@@ -1451,7 +1659,7 @@ window.HFCore = {
     isFuture,
     openM,
     closeM,
-    confirm,
+    confirm: confirmDialog,
     toast,
     fmtDateKey,
     MONTHS,
@@ -1464,10 +1672,21 @@ window.HFCore = {
   },
 };
 
+// ── Prevent data loss on tab close ──────────────────────────────────────────
+window.addEventListener('beforeunload',()=>{
+  try{ localStorage.setItem(SK,JSON.stringify(DB)); }catch(e){}
+  if(window.HFApi&&window.HFApi.getToken()){
+    const payload=JSON.stringify({db:DB});
+    try{ navigator.sendBeacon('/api/state',new Blob([payload],{type:'application/json'})); }catch(e){}
+  }
+});
+
 document.addEventListener('DOMContentLoaded',()=>{
   load(); initAuth();
 
   // ── Auto-login via stored JWT token ────────────────────────────────────
+  function dismissSplash(){ const sp=$('splash-screen'); if(sp) sp.classList.add('done'); }
+
   if(window.HFApi&&window.HFApi.hasToken()){
     window.HFApi.autoLogin().then(res=>{
       if(res&&!res.error){
@@ -1482,9 +1701,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     }).catch(()=>{
       // Server unreachable — try localStorage session fallback
       _tryLocalFallback();
+    }).finally(()=>{
+      if(!CU) dismissSplash();
     });
   } else {
     _tryLocalFallback();
+    if(!CU) dismissSplash();
   }
 
   function _tryLocalFallback(){
@@ -1502,8 +1724,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(updateGreeting,60000);
   setInterval(checkReminders,60000);
 
+  // Lazy render analytics when section becomes visible
+  const analyticsSection=$('sec-analytics');
+  if(analyticsSection&&'IntersectionObserver' in window){
+    const anaObserver=new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{ if(entry.isIntersecting){ renderAnalytics(); anaObserver.unobserve(entry.target); } });
+    },{threshold:.1});
+    anaObserver.observe(analyticsSection);
+  }
+
   bindEvents();
 
   console.log('%c🚀 HabitFlow Pro v3 Ready (MERN Edition)','color:#4F8EF7;font-size:18px;font-weight:900');
-  console.log('%c  Alt+1-9: Navigate | Alt+N: Add Habit | Admin: admin/admin123','color:#888;font-size:12px');
+  console.log('%c  Alt+1-9: Navigate | Alt+N: Add Habit','color:#888;font-size:12px');
 });

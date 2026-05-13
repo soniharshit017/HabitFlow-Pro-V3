@@ -21,8 +21,16 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [4, 'Password must be at least 4 characters'],
+    minlength: [8, 'Password must be at least 8 characters'],
     select: false,
+  },
+  email: {
+    type: String,
+    required: [true, 'Email is required'],
+    trim: true,
+    lowercase: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+    unique: true,
   },
   name: {
     type: String,
@@ -61,12 +69,21 @@ userSchema.methods.comparePassword = function (plain) {
   return bcrypt.compare(plain, this.password);
 };
 
+userSchema.methods.isAdmin = function () {
+  return this.role === 'admin' || this.role === 'super_admin';
+};
+
+userSchema.methods.isSuperAdmin = function () {
+  return this.role === 'super_admin';
+};
+
 // Strip password from output
 userSchema.methods.toSafeObject = function () {
   return {
     id: this.appId,
     name: this.name,
     username: this.username,
+    email: this.email,
     role: this.role,
     status: this.status,
     createdAt: this.createdAt,

@@ -31,7 +31,7 @@
     if(authCard) authCard.classList.add('auth-card-wide');
 
     if(hint){
-      hint.innerHTML = 'Default Super Admin: <strong>admin / admin123</strong><br/>Default User: <strong>user / user123</strong>';
+      hint.innerHTML = 'Default Super Admin: <strong>admin / admin123</strong><br/>Default User: <strong>user / user1234</strong>';
     }
 
     if(register){
@@ -280,6 +280,24 @@
   HF.createDirectUser = function(payload){
     const DB = HF.getDB();
     const id = core.helpers.uid();
+
+    // Try to register via backend API for persistence
+    if (window.HFApi && window.HFApi.register) {
+      window.HFApi.register(
+        payload.fullName,
+        payload.email,
+        payload.username,
+        payload.password
+      ).then(res => {
+        if (res && !res.error && res.token) {
+          window.HFApi.setToken(res.token);
+          console.log('[HF] User registered via API successfully.');
+        }
+      }).catch(err => {
+        console.warn('[HF] API registration fallback failed:', err);
+      });
+    }
+
     const user = {
       id,
       name: payload.fullName,

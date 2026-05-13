@@ -3,13 +3,49 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HabitFlow Pro v3 — Life Management System</title>
+  <meta name="description" content="Track habits, set goals, journal your progress, and build streaks with HabitFlow Pro. A premium productivity and life management system."/>
+  <meta name="keywords" content="habit tracker, goal setting, productivity, journal, pomodoro, life management"/>
+  <meta name="author" content="HabitFlow Team"/>
+  <meta property="og:title" content="HabitFlow Pro — Build Better Habits"/>
+  <meta property="og:description" content="Track, analyze, and improve your daily habits with advanced analytics and gamification."/>
+  <meta property="og:type" content="website"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="HabitFlow Pro"/>
+  <meta name="twitter:description" content="Premium habit tracking and life management."/>
+  <link rel="canonical" href="https://yourdomain.com"/>
+  <title>HabitFlow Pro — Habit Tracker, Goals &amp; Life Management</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css?v=3.1"/>
+  <link rel="stylesheet" href="enhance.css?v=3.1"/>
+  <link rel="stylesheet" href="waterStyles.css?v=3.1"/>
+  <link rel="stylesheet" href="medicineStyles.css?v=3.1"/>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "HabitFlow Pro",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "1200" }
+  }
+  </script>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div id="sr-announcer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+  <noscript>
+    <div style="padding:24px;text-align:center;background:#fee2e2;color:#991b1b;border-bottom:1px solid #fca5a5;">
+      <strong>JavaScript is required.</strong> HabitFlow Pro is a rich interactive application that requires JavaScript to function. Please enable JavaScript in your browser settings.
+    </div>
+  </noscript>
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-logo">💧</div>
+    <div class="splash-title">HabitFlow Pro</div>
+    <div class="splash-spinner"></div>
+  </div>
 
 <canvas id="confetti-canvas"></canvas>
 <div id="toast" class="toast" role="alert" aria-live="polite"></div>
@@ -26,48 +62,52 @@
       <div><div class="auth-brand-name">HabitFlow Pro</div><div class="auth-brand-sub">Life Management System</div></div>
     </div>
 
-    <div id="auth-tabs" class="auth-tabs">
-      <button class="auth-tab active" data-tab="login">Login</button>
-      <button class="auth-tab" data-tab="register">Register</button>
+    <div id="auth-tabs" class="auth-tabs" role="tablist">
+      <button class="auth-tab active" data-tab="login" role="tab" aria-selected="true" aria-controls="tab-login" id="tab-login-btn">Login</button>
+      <button class="auth-tab" data-tab="register" role="tab" aria-selected="false" aria-controls="tab-register" id="tab-register-btn">Register</button>
     </div>
 
     <!-- Login form -->
-    <div id="tab-login" class="auth-form-wrap active">
+    <div id="tab-login" class="auth-form-wrap active" role="tabpanel" aria-labelledby="tab-login-btn">
       <div class="form-group">
-        <label class="form-label">Username</label>
-        <input type="text" id="login-user" class="form-input" placeholder="Enter username" autocomplete="username"/>
+        <label for="login-user" class="form-label">Username</label>
+        <input type="text" id="login-user" class="form-input" placeholder="Enter username" autocomplete="username" aria-required="true"/>
       </div>
       <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" id="login-pass" class="form-input" placeholder="Enter password" autocomplete="current-password"/>
+        <label for="login-pass" class="form-label">Password</label>
+        <input type="password" id="login-pass" class="form-input" placeholder="Enter password" autocomplete="current-password" aria-required="true"/>
       </div>
-      <div id="login-err" class="auth-err hidden"></div>
+      <div id="login-err" class="auth-err hidden" role="alert"></div>
       <button class="btn btn-primary w-full" id="btn-login">Login →</button>
-      <div class="auth-hint">Default admin: <strong>admin / admin123</strong><br/>Default user: <strong>user / user123</strong></div>
+      <div class="auth-hint">Default admin: <strong>admin / admin123</strong><br/>Default user: <strong>user / user1234</strong></div>
     </div>
 
     <!-- Register form -->
-    <div id="tab-register" class="auth-form-wrap">
+    <div id="tab-register" class="auth-form-wrap" role="tabpanel" aria-labelledby="tab-register-btn">
       <div class="form-group">
-        <label class="form-label">Full Name</label>
-        <input type="text" id="reg-name" class="form-input" placeholder="Your full name"/>
+        <label for="reg-name" class="form-label">Full Name</label>
+        <input type="text" id="reg-name" class="form-input" placeholder="Your full name" aria-required="true"/>
       </div>
       <div class="form-group">
-        <label class="form-label">Username</label>
-        <input type="text" id="reg-user" class="form-input" placeholder="Choose username"/>
+        <label for="reg-email" class="form-label">Email</label>
+        <input type="email" id="reg-email" class="form-input" placeholder="your@email.com" aria-required="true"/>
       </div>
       <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" id="reg-pass" class="form-input" placeholder="Choose password"/>
+        <label for="reg-user" class="form-label">Username</label>
+        <input type="text" id="reg-user" class="form-input" placeholder="Choose username" aria-required="true"/>
       </div>
-      <div id="reg-err" class="auth-err hidden"></div>
+      <div class="form-group">
+        <label for="reg-pass" class="form-label">Password</label>
+        <input type="password" id="reg-pass" class="form-input" placeholder="Choose password (min 8 chars)" aria-required="true"/>
+      </div>
+      <div id="reg-err" class="auth-err hidden" role="alert"></div>
       <button class="btn btn-primary w-full" id="btn-register">Create Account →</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ MAIN APP ═══════════ -->
-<div id="app" class="app-shell hidden">
+  <!-- ═══════════ MAIN APP ═══════════ -->
+<div id="app" class="app-shell hidden" role="application" aria-label="HabitFlow Pro Application">
 
   <!-- ═══ MODALS ═══ -->
 
@@ -84,19 +124,225 @@
     </div>
   </div>
 
-  <!-- Habit Modal -->
+  <!-- Goal Modal -->
+  <div id="goal-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-wide" role="dialog" aria-modal="true">
+      <button class="modal-x" id="gm-x">✕</button>
+      <h3 class="modal-title" id="gm-title">Add Goal</h3>
+      <div class="form-grid-2">
+        <div class="form-group span-2">
+          <label class="form-label">Goal Title *</label>
+          <input type="text" id="gm-title-input" class="form-input" placeholder="e.g. Run a Marathon"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji</label>
+          <input type="text" id="gm-emoji" class="form-input" placeholder="🎯" maxlength="2"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deadline</label>
+          <input type="date" id="gm-deadline" class="form-input"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select id="gm-priority" class="form-select">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="gm-status" class="form-select">
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Why is this important?</label>
+          <input type="text" id="gm-why" class="form-input" placeholder="Your motivation..."/>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Reward</label>
+          <input type="text" id="gm-reward" class="form-input" placeholder="e.g. Buy new shoes"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="gm-cancel">Cancel</button>
+        <button class="btn btn-primary" id="gm-save">Save Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Modal -->
+  <div id="task-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <button class="modal-x" id="tkm-x">✕</button>
+      <h3 class="modal-title" id="tkm-title">Add Task</h3>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Task Title *</label>
+        <input type="text" id="tkm-title-inp" class="form-input" placeholder="e.g. Buy running shoes"/>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Description (optional)</label>
+        <input type="text" id="tkm-desc" class="form-input" placeholder="Details..."/>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Emoji</label>
+          <input type="text" id="tkm-emoji" class="form-input" placeholder="✅" maxlength="2"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select id="tkm-priority" class="form-select">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input type="date" id="tkm-start" class="form-input"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Time (optional)</label>
+          <input type="time" id="tkm-time" class="form-input"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Frequency</label>
+          <select id="tkm-freq" class="form-select">
+            <option value="daily">Daily</option>
+            <option value="alternate">Alternate Day</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="none" selected>One-time</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="tkm-status" class="form-select">
+            <option value="pending">Pending</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Reminder (e.g. 1 hour before)</label>
+          <input type="text" id="tkm-reminder" class="form-input" placeholder="Reminder text..."/>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Notes</label>
+          <textarea id="tkm-notes" class="form-input" rows="2" placeholder="Any extra notes..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="tkm-cancel">Cancel</button>
+        <button class="btn btn-primary" id="tkm-save">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goal Detail Modal -->
+  <div id="goal-detail-modal" class="modal-overlay" aria-hidden="true" style="z-index:9000;">
+    <div class="modal-box modal-wide" style="max-width:800px; max-height:90vh; display:flex; flex-direction:column;" role="dialog" aria-modal="true">
+      <button class="modal-x" id="gd-x">✕</button>
+      
+      <!-- Header -->
+      <div class="gd-header" style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+        <div id="gd-emoji" style="font-size:48px;">🎯</div>
+        <div style="flex:1;">
+          <h2 id="gd-title" style="margin:0;font-size:24px;color:var(--tp);">Goal Title</h2>
+          <div id="gd-meta" style="font-size:12px;color:var(--ts);display:flex;gap:12px;margin-top:6px;"></div>
+        </div>
+        <div style="text-align:right;">
+          <div id="gd-progress-text" style="font-size:18px;font-weight:bold;color:var(--pri);">0%</div>
+          <div style="font-size:12px;color:var(--ts);">Completed</div>
+        </div>
+      </div>
+      <div class="gc-why" id="gd-why" style="font-style:italic;color:var(--ts);margin-bottom:16px;padding-left:12px;border-left:3px solid var(--pri);"></div>
+      <div class="gc-progress-bar-outer" style="margin-bottom:24px;"><div id="gd-progress-fill" class="gc-progress-bar" style="width:0%;"></div></div>
+      
+      <!-- Tabs -->
+      <div class="auth-tabs" style="margin-bottom:16px;">
+        <button class="auth-tab gd-tab active" data-tab="tasks">Tasks / To-Do</button>
+        <button class="auth-tab gd-tab" data-tab="tracker">Tracker</button>
+        <button class="auth-tab gd-tab" data-tab="reminders">Reminders / Notifs</button>
+        <button class="auth-tab gd-tab" data-tab="notes">Notes & Logs</button>
+      </div>
+
+      <!-- Content Panels -->
+      <div style="flex:1; overflow-y:auto; padding-right:8px;">
+        
+        <!-- Tasks Panel -->
+        <div id="gd-tasks" class="gd-panel active">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:18px;">✅ Tasks & To-Do List</h3>
+            <button class="btn btn-primary btn-sm" id="btn-add-task">+ Add Task</button>
+          </div>
+          <div id="gd-tasks-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- Tracker Panel -->
+        <div id="gd-tracker" class="gd-panel" style="display:none;">
+          <h3 style="margin:0 0 16px 0;font-size:18px;">📊 Status Tracker</h3>
+          <div id="gd-tracker-stats" style="display:flex;gap:12px;margin-bottom:16px;"></div>
+          <select id="gd-tracker-filter" class="form-select sm" style="margin-bottom:16px;max-width:200px;">
+            <option value="all">All Tasks</option>
+            <option value="pending">Pending</option>
+            <option value="done">Completed</option>
+            <option value="missed">Overdue/Missed</option>
+            <option value="upcoming">Upcoming</option>
+          </select>
+          <div id="gd-tracker-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- Reminders Panel -->
+        <div id="gd-reminders" class="gd-panel" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:18px;">🔔 Notifications & Reminders</h3>
+          </div>
+          <div class="form-grid-2" style="background:var(--bg2);padding:16px;border-radius:var(--r-md);margin-bottom:16px;">
+            <div class="form-group"><label class="form-label">Time / Date</label><input type="time" id="grm-time" class="form-input"/></div>
+            <div class="form-group"><label class="form-label">Alert Type</label><select id="grm-offset" class="form-select"><option value="exact">Exact time</option><option value="15m">15m before</option><option value="1h">1h before</option><option value="1d">1 day before</option></select></div>
+            <div class="form-group span-2"><label class="form-label">Message</label><input type="text" id="grm-msg" class="form-input" placeholder="What to remind?"/></div>
+            <div class="form-group span-2" style="text-align:right;"><button class="btn btn-primary btn-sm" id="btn-add-reminder">Set Reminder</button></div>
+          </div>
+          <div id="gd-rem-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- Notes Panel -->
+        <div id="gd-notes" class="gd-panel" style="display:none;">
+          <h3 style="margin:0 0 16px 0;font-size:18px;">📝 Notes & Progress Logs</h3>
+          <div class="form-group" style="margin-bottom:12px;">
+            <textarea id="gn-text" class="form-input" rows="3" placeholder="Write a progress update or reflection..."></textarea>
+          </div>
+          <div class="form-grid-2" style="margin-bottom:16px;">
+            <div class="form-group"><select id="gn-type" class="form-select sm"><option value="progress">Progress Update</option><option value="learning">Learning</option><option value="blocker">Blocker</option><option value="note">General Note</option></select></div>
+            <div class="form-group"><input type="text" id="gn-tags" class="form-input sm" placeholder="Tags (comma separated)"/></div>
+            <div class="form-group span-2" style="text-align:right;"><button class="btn btn-primary btn-sm" id="btn-save-note">Save Note</button></div>
+          </div>
+          
+          <h4 style="margin:24px 0 12px 0;">Timeline</h4>
+          <div id="gd-notes-timeline" class="timeline-wrap" style="margin-bottom:24px;"></div>
+          
+          <h4 style="margin:0 0 12px 0;">All Logs</h4>
+          <div id="gd-notes-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer" style="margin-top:16px;">
+        <button class="btn btn-ghost" id="gd-close">Close</button>
+      </div>
+    </div>
+  </div>
   <div id="habit-modal" class="modal-overlay" aria-hidden="true">
     <div class="modal-box modal-wide" role="dialog" aria-modal="true">
       <button class="modal-x" id="hm-x">✕</button>
       <h3 class="modal-title" id="hm-title">Add Habit</h3>
-      <div class="form-grid-3">
+      <div class="form-grid-2">
         <div class="form-group span-2">
           <label class="form-label">Habit Name *</label>
           <input type="text" id="hm-name" class="form-input" placeholder="e.g. Morning Run" maxlength="50"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Emoji (any)</label>
-          <input type="text" id="hm-emoji" class="form-input text-center text-xl" placeholder="💪" maxlength="4"/>
         </div>
         <div class="form-group">
           <label class="form-label">Category</label>
@@ -112,6 +358,10 @@
           </select>
         </div>
         <div class="form-group">
+          <label class="form-label">Emoji</label>
+          <input type="text" id="hm-emoji" class="form-input text-center text-xl" placeholder="💪" maxlength="4"/>
+        </div>
+        <div class="form-group">
           <label class="form-label">Priority</label>
           <select id="hm-priority" class="form-select">
             <option value="high">🔴 High</option>
@@ -124,13 +374,13 @@
           <select id="hm-freq" class="form-select">
             <option value="daily" selected>Daily</option>
             <option value="weekly">Once a week</option>
-            <option value="alternate">Alternate day</option>
-            <option value="2week">2 days/week</option>
-            <option value="15days">Every 15 days</option>
-            <option value="monthly">Once a month</option>
+            <option value="2week">2 times a week</option>
+            <option value="10days">1 in 10 days</option>
+            <option value="15days">1 in 15 days</option>
+            <option value="monthly">1 in month overall</option>
           </select>
         </div>
-        <div class="form-group span-3">
+        <div class="form-group span-2">
           <label class="form-label">Notes</label>
           <input type="text" id="hm-notes" class="form-input" placeholder="e.g. Workout lower body, focus on squats…" maxlength="200"/>
         </div>
@@ -142,7 +392,7 @@
           <label class="form-label">End Time</label>
           <input type="time" id="hm-end" class="form-input"/>
         </div>
-        <div class="form-group">
+        <div class="form-group span-2">
           <label class="form-label">Reminder (min)</label>
           <select id="hm-reminder" class="form-select">
             <option value="0">None</option>
@@ -153,7 +403,7 @@
             <option value="60">1 hour</option>
           </select>
         </div>
-        <div class="form-group span-3">
+        <div class="form-group span-2">
           <label class="form-label">Accent Color</label>
           <div class="swatch-row" id="hm-swatches"></div>
         </div>
@@ -187,6 +437,14 @@
           <label class="form-label">Why this goal matters</label>
           <textarea id="gm-why" class="form-input" rows="2" placeholder="Motivation behind this goal…" style="resize:vertical"></textarea>
         </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select id="gm-priority" class="form-select"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="gm-status" class="form-select"><option value="active" selected>Active</option><option value="paused">Paused</option><option value="completed">Completed</option></select>
+        </div>
         <div class="form-group span-2">
           <label class="form-label">Custom Reward on Completion</label>
           <input type="text" id="gm-reward" class="form-input" placeholder="e.g. Buy new shoes, Movie night…" maxlength="100"/>
@@ -196,6 +454,162 @@
         <button class="btn btn-ghost" id="gm-cancel">Cancel</button>
         <button class="btn btn-primary" id="gm-save">Save Goal</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Goal Detail Modal -->
+  <div id="goal-detail-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-xl" role="dialog" aria-modal="true">
+      <button class="modal-x" id="gd-x">✕</button>
+      <div class="modal-header" style="display:flex;align-items:center;gap:10px">
+        <span class="gd-emoji" id="gd-emoji" style="font-size:32px">🎯</span>
+        <h3 class="modal-title" id="gd-title">Goal Detail</h3>
+      </div>
+      <div class="gd-meta" id="gd-meta"></div>
+      <p class="gd-why" id="gd-why" style="margin:8px 0 16px;color:var(--ts);font-size:var(--fs-sm)"></p>
+      <div class="gc-progress-wrap">
+        <div class="gc-progress-bar-outer"><div class="gc-progress-bar" id="gd-progress-fill" style="width:0%"></div></div>
+        <div class="gc-progress-label"><span id="gd-progress-text">0% complete</span></div>
+      </div>
+      <div class="gd-tabs">
+        <button class="gd-tab active" data-tab="tasks">📋 Tasks</button>
+        <button class="gd-tab" data-tab="notes">📝 Notes</button>
+        <button class="gd-tab" data-tab="tracker">📊 Tracker</button>
+        <button class="gd-tab" data-tab="reminders">🔔 Reminders</button>
+      </div>
+      <div class="gd-panels">
+        <div class="gd-panel active" id="gd-tasks">
+          <div class="gd-panel-hd"><button class="btn btn-primary btn-sm" id="btn-add-task">+ Add Task</button></div>
+          <div id="gd-tasks-list"></div>
+        </div>
+        <div class="gd-panel" id="gd-notes">
+          <div class="gd-panel-hd">
+            <select id="gn-type" class="form-select sm"><option value="progress">Progress</option><option value="learning">Learning</option><option value="mistake">Mistake</option><option value="achievement">Achievement</option><option value="daily">Daily Update</option></select>
+            <input id="gn-tags" class="form-input sm" placeholder="Tags (comma separated)" />
+          </div>
+          <textarea id="gn-text" class="form-input" rows="3" placeholder="Write a note..."></textarea>
+          <button class="btn btn-primary btn-sm" id="btn-save-note" style="margin-top:8px">Save Note</button>
+          <div id="gd-notes-list" style="margin-top:16px"></div>
+          <div id="gd-notes-timeline" style="margin-top:16px"></div>
+        </div>
+        <div class="gd-panel" id="gd-tracker">
+          <div class="gd-panel-hd">
+            <select id="gd-tracker-filter" class="form-select sm">
+              <option value="all">All</option><option value="pending">Pending</option><option value="done">Completed</option><option value="missed">Missed</option><option value="upcoming">Upcoming</option>
+            </select>
+          </div>
+          <div id="gd-tracker-stats" class="gstats-row"></div>
+          <div id="gd-tracker-list"></div>
+        </div>
+        <div class="gd-panel" id="gd-reminders">
+          <div class="gd-panel-hd">
+            <input type="time" id="grm-time" class="form-input sm" />
+            <input type="text" id="grm-msg" class="form-input sm" placeholder="Reminder message" />
+            <select id="grm-offset" class="form-select sm"><option value="exact">On time</option><option value="5">5 min before</option><option value="15">15 min before</option><option value="30">30 min before</option></select>
+            <button class="btn btn-primary btn-sm" id="btn-add-reminder">Add</button>
+          </div>
+          <div id="gd-rem-list"></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" id="gd-close">Close</button></div>
+    </div>
+  </div>
+
+  <!-- Task Modal -->
+  <div id="task-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-lg" role="dialog" aria-modal="true">
+      <button class="modal-x" id="tkm-x">✕</button>
+      <h3 class="modal-title" id="tkm-title">Add Task</h3>
+      <div class="form-grid-2">
+        <div class="form-group span-2"><label class="form-label">Title *</label><input type="text" id="tkm-title-inp" class="form-input" placeholder="Task title" maxlength="120"/></div>
+        <div class="form-group span-2"><label class="form-label">Description</label><textarea id="tkm-desc" class="form-input" rows="2" placeholder="Short description"></textarea></div>
+        <div class="form-group span-2"><label class="form-label">Notes</label><textarea id="tkm-notes" class="form-input" rows="2" placeholder="Private notes..."></textarea></div>
+        <div class="form-group"><label class="form-label">Start Date</label><input type="date" id="tkm-start" class="form-input"/></div>
+        <div class="form-group"><label class="form-label">Time</label><input type="time" id="tkm-time" class="form-input"/></div>
+        <div class="form-group"><label class="form-label">Frequency</label><select id="tkm-freq" class="form-select"><option value="daily">Daily</option><option value="alternate">Alternate day</option><option value="w2">2 days/week</option><option value="w3">3 days/week</option><option value="weekly">Weekly</option><option value="m10">10th of month</option><option value="m15">15th of month</option><option value="monthly">Monthly</option><option value="custom">Custom</option></select></div>
+        <div class="form-group"><label class="form-label">Priority</label><select id="tkm-priority" class="form-select"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+        <div class="form-group"><label class="form-label">Status</label><select id="tkm-status" class="form-select"><option value="pending">Pending</option><option value="in-progress">In Progress</option><option value="done">Done</option></select></div>
+        <div class="form-group"><label class="form-label">Emoji</label><input type="text" id="tkm-emoji" class="form-input text-center" placeholder="✅" maxlength="4"/></div>
+        <div class="form-group span-2"><label class="form-label">Reminder</label><input type="text" id="tkm-reminder" class="form-input" placeholder="e.g. 15 min before"/></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" id="tkm-cancel">Cancel</button><button class="btn btn-primary" id="tkm-save">Save Task</button></div>
+    </div>
+  </div>
+
+  <!-- Medicine Modal -->
+  <div id="med-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-lg" role="dialog" aria-modal="true">
+      <button class="modal-x" id="mm-x">✕</button>
+      <h3 class="modal-title" id="mm-title">Add Medicine</h3>
+      <input type="hidden" id="mm-id"/>
+      
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Medicine Type</label>
+        <div class="type-selector" id="mm-type-selector">
+          <button class="type-btn active" data-type="tablet">💊 Tablet</button>
+          <button class="type-btn" data-type="capsule">💊 Capsule</button>
+          <button class="type-btn" data-type="syrup">🧪 Syrup</button>
+          <button class="type-btn" data-type="injection">💉 Injection</button>
+          <button class="type-btn" data-type="drops">💧 Drops</button>
+          <button class="type-btn" data-type="topical">🧴 Topical</button>
+          <button class="type-btn" data-type="ointment">🩹 Ointment</button>
+          <button class="type-btn" data-type="supplement">⚡ Supplement</button>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group span-2"><label class="form-label">Name *</label><input type="text" id="mm-name" class="form-input" placeholder="e.g. Vitamin D"/></div>
+        <div class="form-group"><label class="form-label">Dosage</label><input type="text" id="mm-dosage" class="form-input" placeholder="e.g. 1000 IU"/></div>
+        <div class="form-group"><label class="form-label">Meal Timing</label><select id="mm-meal" class="form-select"><option value="none">None</option><option value="before">Before food</option><option value="with">With food</option><option value="after">After food</option></select></div>
+        
+        <div class="form-group span-2">
+          <label class="form-label">Reminder Times * <span style="font-size:12px; font-weight:normal; color:var(--ts);">(Auto-suggests based on slots)</span></label>
+          <div id="mm-times-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn btn-ghost btn-sm" id="btn-add-time-morning">+ Morning</button>
+            <button class="btn btn-ghost btn-sm" id="btn-add-time-noon">+ Noon</button>
+            <button class="btn btn-ghost btn-sm" id="btn-add-time-night">+ Night</button>
+            <button class="btn btn-ghost btn-sm" id="btn-add-time-custom">+ Custom</button>
+          </div>
+        </div>
+
+        <div class="form-group span-2">
+          <label class="form-label">Frequency</label>
+          <select id="mm-freq" class="form-select">
+            <option value="daily" selected>Daily</option>
+            <option value="weekly">Once a week</option>
+            <option value="2week">2 times a week</option>
+            <option value="10days">1 in 10 days</option>
+            <option value="15days">1 in 15 days</option>
+            <option value="monthly">1 in month overall</option>
+            <option value="custom">Custom interval</option>
+          </select>
+          <div id="mm-custom-freq-opts" class="freq-opts" style="display:none;">
+            <label class="form-label" style="font-size:12px;">Repeat every X days:</label>
+            <input type="number" id="mm-freq-custom-days" class="form-input" min="1" max="100" value="3" />
+          </div>
+        </div>
+        
+        <div class="form-group"><label class="form-label">Start Date</label><input type="date" id="mm-start" class="form-input"/></div>
+        <div class="form-group"><label class="form-label">End Date</label><input type="date" id="mm-end" class="form-input"/></div>
+        
+        <div class="form-group"><label class="form-label">Total Stock Quantity</label><input type="number" id="mm-stock" class="form-input" placeholder="e.g. 30" min="0"/></div>
+        <div class="form-group"><label class="form-label">Low Stock Alert At</label><input type="number" id="mm-low-stock" class="form-input" placeholder="e.g. 5" min="0"/></div>
+
+        <div class="form-group span-2">
+          <label class="form-label">Prescription (Image)</label>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="file" id="mm-prescription" class="form-input" accept="image/*" style="flex:1;" />
+            <button type="button" class="btn btn-ghost btn-sm" id="mm-clear-prescription" style="display:none;" title="Remove Prescription">✕ Remove</button>
+          </div>
+          <div id="mm-prescription-preview" style="margin-top:8px; max-height:100px; overflow:hidden; border-radius:var(--r-md); display:none;">
+            <img id="mm-prescription-img" src="" alt="Prescription Preview" style="width:100%; height:auto; object-fit:contain; max-height:100px;" />
+          </div>
+        </div>
+
+        <div class="form-group span-2"><label class="form-label">Notes</label><textarea id="mm-notes" class="form-input" rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" id="mm-cancel">Cancel</button><button class="btn btn-primary" id="mm-save">Save Medicine</button></div>
     </div>
   </div>
 
@@ -248,6 +662,15 @@
         <button class="btn btn-ghost" id="jm-cancel">Cancel</button>
         <button class="btn btn-primary" id="jm-save">Save Entry</button>
       </div>
+    </div>
+  </div>
+
+  <div id="rx-viewer-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box modal-lg" role="dialog" aria-modal="true" style="display:flex; flex-direction:column; background:transparent; box-shadow:none; padding:0;">
+      <div style="display:flex; justify-content:flex-end; padding:8px;">
+        <button class="modal-x" id="rx-viewer-x" style="position:static; background:#fff; border-radius:50%;">✕</button>
+      </div>
+      <img id="rx-viewer-img" src="" alt="Prescription" style="width:100%; height:auto; max-height:80vh; object-fit:contain; border-radius:var(--r-lg); background:#000;" />
     </div>
   </div>
 
@@ -379,12 +802,14 @@
       <a href="#" class="nav-i active" data-s="dashboard"><span>🏠</span><span>Dashboard</span></a>
       <a href="#" class="nav-i" data-s="tracker"><span>📅</span><span>Tracker</span></a>
       <a href="#" class="nav-i" data-s="timeline"><span>⏱️</span><span>Timeline</span></a>
-      <a href="#" class="nav-i" data-s="goals"><span>🎯</span><span>Goals</span></a>
+      <a href="#" class="nav-i" data-s="goals" style="display:none !important;"><span>🎯</span><span>Goals</span></a>
       <a href="#" class="nav-i" data-s="todo"><span>✅</span><span>To-Do</span></a>
       <a href="#" class="nav-i" data-s="matrix"><span>🧠</span><span>Matrix</span></a>
       <a href="#" class="nav-i" data-s="analytics"><span>📊</span><span>Analytics</span></a>
       <a href="#" class="nav-i" data-s="journal"><span>📔</span><span>Journal</span></a>
       <a href="#" class="nav-i" data-s="life"><span>🌟</span><span>Life</span></a>
+      <a href="#" class="nav-i" data-s="water"><span>💧</span><span>Water</span></a>
+      <a href="#" class="nav-i" data-s="medicine"><span>💊</span><span>Medicine</span></a>
       <a href="#" class="nav-i" data-s="badges"><span>🏅</span><span>Badges</span></a>
     </nav>
 
@@ -395,14 +820,14 @@
       </div>
       <div class="foot-actions">
         <button class="btn btn-ghost btn-xs" id="btn-pomo">⏱️ Pomodoro</button>
-        <button class="btn btn-ghost btn-xs" id="btn-admin" id="btn-admin-panel" style="display:none">🛡️ Admin</button>
+        <button class="btn btn-ghost btn-xs" id="btn-admin">🛡️ Admin</button>
       </div>
       <button class="btn btn-danger btn-xs w-full" id="btn-logout" style="margin-top:8px">← Logout</button>
     </div>
   </aside>
 
   <!-- ═══ MAIN ═══ -->
-  <main class="main" id="main">
+  <main class="main" id="main-content">
 
     <!-- TOPBAR -->
     <header class="topbar">
@@ -413,7 +838,7 @@
       </div>
       <div class="topbar-r">
         <div class="search-wrap">
-          <span class="s-ico">🔍</span>
+          <span class="s-ico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg></span>
           <input type="text" id="search" class="search-inp" placeholder="Search habits…"/>
         </div>
         <button class="icon-btn" id="notif-btn" title="Notifications">🔔<span class="notif-dot" id="notif-dot" hidden></span></button>
@@ -425,10 +850,11 @@
     <div class="page-wrap">
 
       <!-- ═══ DASHBOARD ═══ -->
-      <section id="sec-dashboard" class="sec active">
+      <section id="sec-dashboard" class="sec active" aria-labelledby="dashboard-title">
+        <h1 class="visually-hidden" id="dashboard-title">Dashboard</h1>
         <div class="hero-card">
           <div class="hero-l">
-            <h1 class="greet" id="greet">Good Morning 👋</h1>
+            <h2 class="greet" id="greet">Good Morning ✨</h2>
             <p class="quote" id="quote"></p>
             <div class="hero-acts">
               <button class="btn btn-white btn-sm" id="btn-journal-today">📔 Journal</button>
@@ -437,8 +863,8 @@
             </div>
           </div>
           <div class="hero-r">
-            <div class="ring-wrap">
-              <svg class="ring-svg" viewBox="0 0 120 120">
+            <div class="ring-wrap" aria-label="Today's completion percentage">
+              <svg class="ring-svg" viewBox="0 0 120 120" aria-hidden="true">
                 <circle class="ring-track" cx="60" cy="60" r="50"/>
                 <circle class="ring-prog" cx="60" cy="60" r="50" id="ring-prog"/>
               </svg>
@@ -497,7 +923,8 @@
       </section>
 
       <!-- ═══ TRACKER ═══ -->
-      <section id="sec-tracker" class="sec">
+      <section id="sec-tracker" class="sec" aria-labelledby="tracker-title">
+        <h1 class="visually-hidden" id="tracker-title">Monthly Tracker</h1>
         <div class="section-hdr">
           <div class="shl">
             <h2 class="sec-ttl">Monthly Tracker</h2>
@@ -506,12 +933,21 @@
           <div class="tracker-bar">
             <select id="mon-sel" class="form-select sm"></select>
             <select id="yr-sel" class="form-select sm"></select>
-            <select id="cat-sel" class="form-select sm"><option value="">All</option><option value="health">💚 Health</option><option value="fitness">💪 Fitness</option><option value="learning">📚 Learning</option><option value="mindfulness">🧘 Mindful</option><option value="work">💻 Work</option><option value="social">❤️ Social</option><option value="finance">💰 Finance</option><option value="other">⭐ Other</option></select>
+            <select id="cat-sel" class="form-select sm"><option value="">All Categories</option><option value="health">💚 Health</option><option value="fitness">💪 Fitness</option><option value="learning">📚 Learning</option><option value="mindfulness">🧘 Mindful</option><option value="work">💻 Work</option><option value="social">❤️ Social</option><option value="finance">💰 Finance</option><option value="other">⭐ Other</option></select>
             <select id="filter-sel" class="form-select sm">
               <option value="all">All Status</option>
               <option value="completed">Completed</option>
               <option value="missed">Missed</option>
               <option value="pending">Pending</option>
+            </select>
+            <select id="freq-sel" class="form-select sm">
+              <option value="">All Frequencies</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Once a week</option>
+              <option value="2week">2 times a week</option>
+              <option value="10days">1 in 10 days</option>
+              <option value="15days">1 in 15 days</option>
+              <option value="monthly">1 in month overall</option>
             </select>
             <button class="btn btn-ghost btn-sm" id="btn-csv">📤 CSV</button>
             <button class="btn btn-ghost btn-sm" id="btn-json">📦 JSON</button>
@@ -525,12 +961,13 @@
           <button class="pill" data-pf="medium">🟡 Med</button>
           <button class="pill" data-pf="low">🟢 Low</button>
         </div>
-        <div class="tbl-wrap">
-          <table class="tbl" id="tbl">
+        <div class="tbl-wrap" id="tracker-table-wrap">
+          <table class="tbl" id="tbl" role="grid" aria-label="Habit tracker calendar">
             <thead><tr id="tbl-head"></tr></thead>
             <tbody id="tbl-body"></tbody>
           </table>
         </div>
+        <div id="tracker-mobile-list" class="tracker-mobile-list hidden" aria-label="Mobile habit list"></div>
         <div class="reset-row">
           <button class="btn btn-warning btn-sm" id="btn-rst-today">🔄 Reset Today</button>
           <button class="btn btn-warning btn-sm" id="btn-rst-month">🗑️ Reset Month</button>
@@ -543,6 +980,18 @@
         <div class="section-hdr"><h2 class="sec-ttl">⏱️ Daily Timeline</h2><span class="sec-sub">Today's routine</span></div>
         <div id="timeline" class="timeline-wrap"></div>
         <p class="empty-msg hidden" id="tl-empty">No timed habits. Add habits with start times!</p>
+
+        <div class="section-hdr" style="margin-top:24px; padding-top:16px; border-top:1px solid var(--bdr)">
+          <h2 class="sec-ttl">📅 Upcoming</h2>
+          <select id="tl-filter" class="form-select sm">
+            <option value="">All</option>
+            <option value="goal">Goals</option>
+            <option value="task">Tasks</option>
+            <option value="water">Water</option>
+            <option value="medicine">Medicine</option>
+          </select>
+        </div>
+        <div id="timeline-upcoming-list" class="timeline-upcoming-list"></div>
       </section>
 
       <!-- ═══ GOALS ═══ -->
@@ -552,6 +1001,41 @@
           <button class="btn btn-primary btn-sm" id="btn-add-goal">+ Add Goal</button>
         </div>
         <div id="goals-grid" class="goals-grid"></div>
+      </section>
+
+      <!-- ═══ GOAL DETAIL VIEW ═══ -->
+      <section id="sec-goal-detail" class="sec">
+        <div class="section-hdr">
+          <button class="btn btn-ghost" onclick="goTo('goals')">← Back to Goals</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-primary btn-sm" id="btn-gd-edit">✏️ Edit Goal</button>
+        </div>
+        
+        <div id="gd-header" class="gd-header" style="background:var(--bg2); padding:var(--s5); border-radius:var(--r-lg); margin-bottom:var(--s5);">
+           <!-- Header details injected here -->
+        </div>
+
+        <div class="form-grid-2">
+          <!-- Tasks Section -->
+          <div class="gd-card" style="background:var(--bg2); padding:var(--s5); border-radius:var(--r-lg);">
+            <div class="section-hdr"><h3 class="sec-ttl">✅ Goal Tasks</h3></div>
+            <div class="gd-task-add" style="display:flex; gap:8px; margin-bottom:16px;">
+              <input type="text" id="gd-new-task" class="form-input" placeholder="New task..." style="flex:1"/>
+              <input type="date" id="gd-new-task-date" class="form-input" style="width:130px"/>
+              <button class="btn btn-primary" id="btn-gd-add-task">+</button>
+            </div>
+            <div id="gd-tasks-list" class="todo-list-wrap"></div>
+          </div>
+
+          <!-- Timeline & Tracker -->
+          <div class="gd-card" style="background:var(--bg2); padding:var(--s5); border-radius:var(--r-lg);">
+             <div class="section-hdr"><h3 class="sec-ttl">⏱️ Task Timeline</h3></div>
+             <div id="gd-timeline" class="timeline-wrap" style="max-height:200px; overflow-y:auto;"></div>
+             
+             <div class="section-hdr" style="margin-top:24px"><h3 class="sec-ttl">📊 Tracker & Notifications</h3></div>
+             <div id="gd-notifications" class="gd-notifs" style="color:var(--ts); font-size:14px; line-height:1.6;"></div>
+          </div>
+        </div>
       </section>
 
       <!-- ═══ TO-DO ═══ -->
@@ -662,6 +1146,24 @@
         <div id="life-log" class="life-log"></div>
       </section>
 
+      <!-- ═══ WATER TRACKER ═══ -->
+      <section id="sec-water" class="sec">
+        <div class="section-hdr">
+          <h2 class="sec-ttl">💧 Water Tracker</h2>
+          <button class="btn btn-primary btn-sm" id="btn-water-settings">⚙️ Settings</button>
+        </div>
+        <div id="water-tracker" class="water-tracker"></div>
+      </section>
+
+      <!-- ═══ MEDICINE TRACKER ═══ -->
+      <section id="sec-medicine" class="sec">
+        <div class="section-hdr">
+          <h2 class="sec-ttl">💊 Medicine Tracker</h2>
+          <button class="btn btn-primary btn-sm" id="btn-add-medicine">+ Add Medicine</button>
+        </div>
+        <div id="medicine-tracker" class="medicine-tracker"></div>
+      </section>
+
       <!-- ═══ BADGES ═══ -->
       <section id="sec-badges" class="sec">
         <div class="section-hdr"><h2 class="sec-ttl">🏅 Achievements</h2></div>
@@ -672,13 +1174,17 @@
   </main>
 </div><!-- /app -->
 
-<script src="api.js"></script>
-<script src="script.js"></script>
-<script src="users.js"></script>
-<script src="logs.js"></script>
-<script src="approvals.js"></script>
-<script src="notifications.js"></script>
-<script src="profiles.js"></script>
-<script src="admin.js"></script>
+<script src="api.js?v=3.1"></script>
+<script src="script.js?v=3.1"></script>
+<script src="users.js?v=3.1"></script>
+<script src="logs.js?v=3.1"></script>
+<script src="approvals.js?v=3.1"></script>
+<script src="notifications.js?v=3.1"></script>
+<script src="profiles.js?v=3.1"></script>
+<!-- <script src="goals.js?v=3.1"></script> -->
+<script src="waterTracker.js?v=3.1"></script>
+<script src="medicineTracker.js?v=3.1"></script>
+<script src="timeline.js?v=3.1"></script>
+<script src="admin.js?v=3.1"></script>
 </body>
 </html>

@@ -6,12 +6,11 @@
 (function () {
   'use strict';
 
-  // Detect if we're in local dev (file:// or localhost) or production
-  const isLocal = window.location.hostname === 'localhost' ||
-                  window.location.hostname === '127.0.0.1' ||
-                  window.location.protocol === 'file:';
-
-  const API_BASE = isLocal ? 'http://localhost:2000/api' : '/api';
+  // Use same-origin API when served from a web server (including the backend itself).
+  // Only use hardcoded dev URL when opened directly via file:// protocol.
+  const API_BASE = window.location.protocol === 'file:'
+    ? 'http://localhost:2002/api'
+    : '/api';
 
   // ── Token helpers ────────────────────────────────────────────────────────
   const TOKEN_KEY = 'hf_token';
@@ -84,10 +83,10 @@
      * Register a new user.
      * Returns: { token, db, user } | { error }
      */
-    register(name, username, password) {
+    register(name, email, username, password) {
       return request('/auth/register', {
         method:   'POST',
-        body:     { name, username, password },
+        body:     { name, email, username, password },
         skipAuth: true,
       });
     },
