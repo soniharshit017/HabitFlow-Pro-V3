@@ -33,191 +33,8 @@
     appState.adminTab = 'overview';
   };
 
-  HF.renderGoals = function(){
-    const el = $('goals-grid');
-    if(!el) return;
-    const goals = getGoals();
-    if(!goals.length){
-      el.innerHTML = '<div class="empty-msg">No goals yet. Click "+ Add Goal" to start!</div>';
-      return;
-    }
+  // Goal functions moved to goals.js
 
-    el.innerHTML = goals.map(goal => {
-      const pct = parseInt(goal.progress || 0, 10);
-      const done = pct >= 100;
-      const deadline = goal.deadline ? new Date(goal.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No deadline';
-      return `
-        <article class="goal-card ${done ? 'done-goal' : ''}">
-          <div class="gc-top">
-            <span class="gc-emoji">${esc(goal.emoji)}</span>
-            <div class="gc-acts">
-              <button class="hc-btn" data-goal-action="edit" data-goal-id="${goal.id}" title="Edit">Edit</button>
-              <button class="hc-btn del" data-goal-action="delete" data-goal-id="${goal.id}" title="Delete">Delete</button>
-            </div>
-          </div>
-          <div class="gc-title">${esc(goal.title)}</div>
-          ${goal.why ? `<div class="gc-why">${esc(goal.why)}</div>` : ''}
-          <div class="gc-progress-wrap">
-            <div class="gc-progress-bar-outer">
-              <div class="gc-progress-bar" style="width:${pct}%;background:${done ? 'var(--ok)' : 'var(--pri)'}"></div>
-            </div>
-            <div class="gc-progress-label">
-              <span>${pct}% complete</span>
-              <div class="goal-inline-controls">
-                <input type="number" class="gc-pct-input" min="0" max="100" value="${pct}" data-goal-progress="${goal.id}"/>
-                <button class="btn btn-ghost btn-xs" data-goal-action="save-progress" data-goal-id="${goal.id}">Save</button>
-              </div>
-            </div>
-          </div>
-          <div class="gc-deadline">${deadline}</div>
-          ${goal.reward ? `<div class="gc-reward">Reward: ${esc(goal.reward)}</div>` : ''}
-        </article>`;
-    }).join('');
-  };
-
-  HF.openGoalModal = function(id){
-    appState.editGoalId = id || null;
-    $('gm-title').textContent = id ? 'Edit Goal' : 'Add Goal';
-    if(id){
-      const goal = getGoals().find(item => item.id === id);
-      if(goal){
-        $('gm-title-input').value = goal.title || '';
-        $('gm-deadline').value = goal.deadline || '';
-        $('gm-emoji').value = goal.emoji || '';
-        $('gm-why').value = goal.why || '';
-        $('gm-reward').value = goal.reward || '';
-      }
-    } else {
-      ['gm-title-input', 'gm-deadline', 'gm-emoji', 'gm-why', 'gm-reward'].forEach(idName => {
-        $(idName).value = '';
-      });
-    }
-    openM('goal-modal');
-    setTimeout(() => $('gm-title-input').focus(), 40);
-  };
-
-  HF.saveGoal = function(){
-    const title = $('gm-title-input').value.trim();
-    if(!title){
-      toast('Goal title is required.');
-      return;
-    }
-    const current = HF.getCurrentUser();
-    const DB = HF.getDB();
-    const data = {
-      title,
-      deadline: $('gm-deadline').value,
-      emoji: $('gm-emoji').value.trim() || 'Target',
-      why: $('gm-why').value.trim(),
-      reward: $('gm-reward').value.trim(),
-      progress: 0,
-      status: 'active',
-    };
-
-    if(appState.editGoalId){
-      const goal = (DB.goals[current.id] || []).find(item => item.id === appState.editGoalId);
-      if(!goal) return;
-      const nextGoal = { ...goal, ...data, progress: goal.progress };
-      if(HF.isAdmin()){
-        const index = DB.goals[current.id].findIndex(item => item.id === goal.id);
-        DB.goals[current.id][index] = nextGoal;
-        HF.logAction && HF.logAction('Goal updated', 'Goal was edited directly by an admin profile.', {
-          targetUserId: current.id,
-          userName: HF.getProfile(current.id)?.fullName || current.username,
-          role: current.role,
-        });
-        HF.saveState();
-        closeM('goal-modal');
-        HF.renderGoals();
-        core.getFns().updateDashboard();
-        return;
-      }
-      HF.openRequestModal({
-        type: 'goal_update',
-        title: 'Request Goal Update',
-        summary: nextGoal.title,
-        context: 'Goal edits require approval so records stay traceable.',
-        targetUserId: current.id,
-        payload: {
-          goal: nextGoal,
-        },
-      });
-      closeM('goal-modal');
-      return;
-    }
-
-    if(!DB.goals[current.id]) DB.goals[current.id] = [];
-    DB.goals[current.id].push({ id: core.helpers.uid(), ...data });
-    helpers.addXP(15);
-    HF.logAction && HF.logAction('Goal created', 'New goal created by the user.', {
-      targetUserId: current.id,
-      userName: HF.getProfile(current.id)?.fullName || current.username,
-      role: current.role,
-    });
-    HF.saveState();
-    closeM('goal-modal');
-    HF.renderGoals();
-    core.getFns().updateDashboard();
-    core.getFns().checkBadges();
-    toast('Goal added.');
-  };
-
-  HF.requestGoalDelete = function(goalId){
-    const current = HF.getCurrentUser();
-    const goal = getGoals().find(item => item.id === goalId);
-    if(!goal) return;
-    if(HF.isAdmin()){
-      const DB = HF.getDB();
-      DB.goals[current.id] = (DB.goals[current.id] || []).filter(item => item.id !== goalId);
-      HF.logAction && HF.logAction('Goal deleted', 'Goal removed directly by an admin profile.', {
-        targetUserId: current.id,
-        userName: HF.getProfile(current.id)?.fullName || current.username,
-        role: current.role,
-      });
-      HF.saveState();
-      HF.renderGoals();
-      core.getFns().updateDashboard();
-      return;
-    }
-    HF.openRequestModal({
-      type: 'goal_delete',
-      title: 'Request Goal Deletion',
-      summary: goal.title,
-      context: 'Goal deletions are reviewed before records are removed.',
-      targetUserId: current.id,
-      payload: {
-        goalId,
-      },
-    });
-  };
-
-  HF.requestGoalProgressUpdate = function(goalId, progressValue){
-    const current = HF.getCurrentUser();
-    const goal = getGoals().find(item => item.id === goalId);
-    if(!goal) return;
-    const nextGoal = { ...goal, progress: Math.max(0, Math.min(100, Number(progressValue) || 0)) };
-
-    if(HF.isAdmin()){
-      const index = HF.getDB().goals[current.id].findIndex(item => item.id === goalId);
-      HF.getDB().goals[current.id][index] = nextGoal;
-      HF.saveState();
-      HF.renderGoals();
-      core.getFns().updateDashboard();
-      core.getFns().checkBadges();
-      return;
-    }
-
-    HF.openRequestModal({
-      type: 'goal_update',
-      title: 'Request Goal Progress Update',
-      summary: `${goal.title} -> ${nextGoal.progress}%`,
-      context: 'Existing goal edits are routed through approval.',
-      targetUserId: current.id,
-      payload: {
-        goal: nextGoal,
-      },
-    });
-  };
 
   HF.renderJournal = function(){
     const el = $('journal-grid');
@@ -865,9 +682,7 @@
   const baseCheckBadges = core.getFns().checkBadges;
 
   core.override({
-    renderGoals: HF.renderGoals,
-    openGoalModal: HF.openGoalModal,
-    saveGoal: HF.saveGoal,
+
     renderJournal: HF.renderJournal,
     saveJournal: HF.saveJournal,
     renderBadges: HF.renderBadges,
@@ -895,18 +710,7 @@
     bindEvents: function(){
       baseBindEvents();
 
-      $('goals-grid')?.addEventListener('click', event => {
-        const actionEl = event.target.closest('[data-goal-action]');
-        if(!actionEl) return;
-        const action = actionEl.dataset.goalAction;
-        const goalId = actionEl.dataset.goalId;
-        if(action === 'edit') HF.openGoalModal(goalId);
-        if(action === 'delete') HF.requestGoalDelete(goalId);
-        if(action === 'save-progress'){
-          const value = document.querySelector(`[data-goal-progress="${goalId}"]`)?.value;
-          HF.requestGoalProgressUpdate(goalId, value);
-        }
-      });
+      // Event listeners for goals are handled by goals.js
 
       $('journal-grid')?.addEventListener('click', event => {
         const actionEl = event.target.closest('[data-journal-action]');

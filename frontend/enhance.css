@@ -1,0 +1,955 @@
+/* ═══════════════════════════════════════════════
+   HabitFlow Pro v3 — UI/UX Enhancement Layer
+   Animations + Responsive + Premium Polish
+═══════════════════════════════════════════════ */
+
+/* ─── MICRO ANIMATIONS ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79,142,247,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(79,142,247,0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+/* ─── GENERAL POLISH ─── */
+body {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Smooth card entrances */
+.stat-card, .score-card, .goal-card, .jc, .badge-card,
+.todo-item, .tl-item, .upcoming-item, .pl-item,
+.ls-card, .a-card, .med-card, .water-card {
+  animation: fadeInUp 0.4s var(--ease) backwards;
+}
+.stat-card:nth-child(2), .score-card:nth-child(2) { animation-delay: 0.05s; }
+.stat-card:nth-child(3), .score-card:nth-child(3) { animation-delay: 0.1s; }
+.stat-card:nth-child(4), .score-card:nth-child(4) { animation-delay: 0.15s; }
+.stat-card:nth-child(5) { animation-delay: 0.2s; }
+.stat-card:nth-child(6) { animation-delay: 0.25s; }
+
+/* Hero card breathe effect */
+.hero-card {
+  animation: fadeInScale 0.5s var(--ease);
+}
+
+/* Button press effect */
+.btn:active {
+  transform: scale(0.96) !important;
+  transition-duration: 0.05s !important;
+}
+
+/* Card hover lift - universal */
+.stat-card, .score-card, .goal-card, .jc, .badge-card,
+.ls-card, .a-card, .todo-item, .upcoming-item {
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+/* Nav item smooth active indicator */
+.nav-i {
+  transition: all 0.2s var(--ease);
+}
+.nav-i:active {
+  transform: scale(0.97);
+}
+
+/* Ring animation on load */
+.ring-prog {
+  animation: fadeInScale 0.8s var(--ease) 0.3s backwards;
+}
+
+/* Toast slide-in improvement */
+.toast {
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  padding: 12px 24px;
+  font-size: 13px;
+}
+
+/* XP bar glow on progress */
+.xp-bar {
+  position: relative;
+  overflow: hidden;
+}
+.xp-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+/* Pill hover bounce */
+.pill {
+  transition: all 0.15s var(--ease);
+}
+.pill:hover {
+  transform: translateY(-1px);
+}
+.pill:active {
+  transform: scale(0.95);
+}
+
+/* Modal entrance polish */
+.modal-overlay.open .modal-box {
+  animation: fadeInUp 0.3s var(--ease);
+}
+
+/* Progress bar shimmer */
+.pl-bar, .gc-progress-bar, .sc-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hero card gradient animation */
+.hero-card {
+  background-size: 200% 200%;
+  animation: fadeInScale 0.5s var(--ease);
+}
+
+/* Sidebar nav hover ripple */
+.nav-i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--pri);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.nav-i:hover::after {
+  opacity: 0.04;
+}
+
+/* Tracker cell click feedback */
+.dc:active {
+  transform: scale(0.85) !important;
+  transition-duration: 0.05s !important;
+}
+
+/* Badge card earned glow */
+.badge-card.earned {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Search input expand */
+.search-inp {
+  transition: all 0.25s var(--ease);
+}
+
+/* ─── PREMIUM GLASSMORPHISM TOPBAR ─── */
+.topbar {
+  background: rgba(242,245,252,0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+[data-theme="dark"] .topbar {
+  background: rgba(8,15,28,0.85);
+}
+
+/* ─── BETTER SIDEBAR ─── */
+.sidebar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ─── AUTH SCREEN POLISH ─── */
+.auth-screen {
+  background: linear-gradient(135deg, #0B1120 0%, #1A2456 50%, #2D1B69 100%);
+}
+.auth-card {
+  animation: fadeInUp 0.5s var(--ease);
+  backdrop-filter: blur(20px);
+}
+.auth-tab {
+  transition: all 0.2s var(--ease);
+}
+
+/* ─── SPLASH POLISH ─── */
+.splash-screen {
+  background: linear-gradient(135deg, #0B1120 0%, #1A2456 50%, #2D1B69 100%);
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE - ALL SCREEN SIZES
+═══════════════════════════════════════════════ */
+
+/* ── ULTRAWIDE (1920px+) ── */
+@media (min-width: 1920px) {
+  .page-wrap {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--s6);
+  }
+  .hero-card {
+    padding: 56px var(--s6);
+    border-radius: 28px;
+  }
+  .score-row {
+    gap: var(--s5);
+  }
+  .stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .goals-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .analytics-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .journal-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .badges-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .ring-wrap, .ring-svg {
+    width: 130px;
+    height: 130px;
+  }
+  .ring-pct {
+    font-size: 24px;
+  }
+}
+
+/* ── LARGE DESKTOP (1440px - 1919px) ── */
+@media (min-width: 1440px) and (max-width: 1919px) {
+  .page-wrap {
+    max-width: 1400px;
+    padding: var(--s5);
+  }
+  .stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .goals-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .journal-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .badges-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ── STANDARD DESKTOP (1280px - 1439px) ── */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .page-wrap {
+    max-width: 1200px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── SMALL DESKTOP / LARGE LAPTOP (1024px - 1279px) ── */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .page-wrap {
+    padding: 20px;
+  }
+  .hero-card {
+    padding: 32px 24px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .score-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .analytics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .life-charts-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* ── NOTEBOOK / SMALL LAPTOP (900px - 1023px) ── */
+@media (min-width: 900px) and (max-width: 1023px) {
+  .score-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .hero-card {
+    padding: 28px 20px;
+  }
+  .greet {
+    font-size: clamp(20px, 2.5vw, 28px);
+  }
+  .life-charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .goals-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── TABLET LANDSCAPE (768px - 899px) ── */
+@media (min-width: 768px) and (max-width: 899px) {
+  .score-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .hero-card {
+    padding: 24px 18px;
+  }
+  .greet {
+    font-size: 22px;
+  }
+  .life-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .goals-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .journal-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .badges-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .matrix-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── TABLET PORTRAIT (600px - 767px) ── */
+@media (min-width: 600px) and (max-width: 767px) {
+  .page-wrap {
+    padding: 16px;
+    padding-bottom: 90px;
+  }
+  .hero-card {
+    flex-direction: column;
+    padding: 24px 18px;
+    text-align: center;
+    gap: 16px;
+  }
+  .hero-r {
+    display: flex;
+    justify-content: center;
+  }
+  .hero-acts {
+    justify-content: center;
+  }
+  .ring-wrap, .ring-svg {
+    width: 90px;
+    height: 90px;
+  }
+  .ring-pct {
+    font-size: 18px;
+  }
+  .score-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .life-snapshot {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .goals-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .journal-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .badges-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .matrix-grid {
+    grid-template-columns: 1fr;
+  }
+  .greet {
+    font-size: 22px;
+  }
+  .quote {
+    font-size: 13px;
+  }
+
+  /* Bottom nav for tablet portrait */
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    flex-direction: row;
+    padding: 6px 0;
+    border-right: none;
+    border-top: 1px solid var(--bd);
+    z-index: 400;
+    transform: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: var(--sdb);
+  }
+  .sidebar-brand, .sidebar-user, .xp-widget, .sidebar-foot {
+    display: none;
+  }
+  .nav {
+    flex-direction: row;
+    gap: 0;
+    width: 100%;
+    justify-content: space-around;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav-i {
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 10px;
+    font-size: 10px;
+    min-width: 56px;
+  }
+  .nav-i span:first-child {
+    font-size: 20px;
+  }
+  .nav-i span:last-child {
+    font-size: 9px;
+  }
+  .nav-i.active::before {
+    display: none;
+  }
+  .main {
+    margin-left: 0;
+  }
+  .burger {
+    display: none;
+  }
+}
+
+/* ── MOBILE LARGE (480px - 599px) ── */
+@media (min-width: 480px) and (max-width: 599px) {
+  .page-wrap {
+    padding: 14px;
+    padding-bottom: 85px;
+  }
+  .hero-card {
+    flex-direction: column;
+    padding: 20px 16px;
+    text-align: center;
+    border-radius: 18px;
+  }
+  .hero-r {
+    display: flex;
+    justify-content: center;
+  }
+  .hero-acts {
+    justify-content: center;
+  }
+  .ring-wrap, .ring-svg {
+    width: 85px;
+    height: 85px;
+  }
+  .greet {
+    font-size: 20px;
+  }
+  .quote {
+    font-size: 12px;
+  }
+  .score-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .score-card {
+    padding: 12px;
+  }
+  .sc-val {
+    font-size: 22px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 12px;
+  }
+  .life-snapshot {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .goals-grid {
+    grid-template-columns: 1fr;
+  }
+  .journal-grid {
+    grid-template-columns: 1fr;
+  }
+  .badges-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .matrix-grid {
+    grid-template-columns: 1fr;
+  }
+  .section-hdr {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .tracker-bar {
+    width: 100%;
+  }
+  .filter-pills {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .pl-item {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+  .pl-bar-wrap {
+    flex: 1 1 100%;
+    order: 3;
+    margin-top: 6px;
+  }
+  .todo-add-row {
+    flex-wrap: wrap;
+  }
+}
+
+/* ── MOBILE STANDARD (360px - 479px) ── */
+@media (max-width: 479px) {
+  .page-wrap {
+    padding: 12px;
+    padding-bottom: 80px;
+  }
+  .hero-card {
+    flex-direction: column;
+    padding: 18px 14px;
+    text-align: center;
+    border-radius: 16px;
+    gap: 12px;
+  }
+  .hero-r {
+    display: flex;
+    justify-content: center;
+  }
+  .hero-acts {
+    justify-content: center;
+    gap: 6px;
+  }
+  .hero-acts .btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  .ring-wrap, .ring-svg {
+    width: 80px;
+    height: 80px;
+  }
+  .ring-pct {
+    font-size: 16px;
+  }
+  .greet {
+    font-size: 19px;
+  }
+  .quote {
+    font-size: 11.5px;
+    margin-bottom: 10px;
+  }
+  .score-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .score-card {
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .sc-val {
+    font-size: 20px;
+  }
+  .sc-label {
+    font-size: 10px;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 10px;
+    border-radius: 12px;
+    gap: 8px;
+  }
+  .sv {
+    font-size: 18px;
+  }
+  .s-ico {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+  .life-snapshot {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .ls-card {
+    padding: 10px 6px;
+  }
+  .ls-icon {
+    font-size: 24px;
+  }
+  .ls-val {
+    font-size: 16px;
+  }
+  .ls-lbl {
+    font-size: 10px;
+  }
+  .section-hdr {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .sec-ttl {
+    font-size: 17px;
+  }
+  .goals-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .goal-card {
+    padding: 16px;
+  }
+  .journal-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .jc {
+    padding: 16px;
+  }
+  .badges-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .badge-card {
+    padding: 14px 10px;
+  }
+  .bi {
+    font-size: 30px;
+  }
+  .analytics-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .a-card {
+    padding: 16px;
+  }
+  .matrix-grid {
+    grid-template-columns: 1fr;
+  }
+  .matrix-add-row {
+    flex-direction: column;
+  }
+  .upcoming-item {
+    padding: 10px 12px;
+  }
+  .pl-item {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .pl-bar-wrap {
+    flex: 1 1 100%;
+    order: 3;
+    margin-top: 4px;
+  }
+  .pl-emoji {
+    font-size: 18px;
+  }
+  .todo-add-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .todo-add-row .form-input {
+    width: 100%;
+  }
+  .filter-pills {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    gap: 6px;
+  }
+  .pill {
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  .tracker-bar {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .tracker-bar .form-select {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+  }
+  .reset-row {
+    flex-direction: column;
+  }
+  .reset-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .topbar {
+    height: 50px;
+    padding: 0 12px;
+  }
+  .clock {
+    font-size: 16px;
+  }
+  .tdate {
+    font-size: 10px;
+  }
+  .modal-box {
+    padding: 20px 16px;
+  }
+  .modal-title {
+    font-size: 18px;
+  }
+  .modal-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .moti-banner {
+    padding: 12px 14px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+  .tl-item {
+    flex-wrap: wrap;
+    padding: 12px;
+    gap: 10px;
+  }
+  .tl-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    padding: 8px;
+  }
+  .pomo-ring-wrap, .pomo-svg {
+    width: 140px;
+    height: 140px;
+  }
+  .auth-card {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+  /* Water & Medicine responsive */
+  .water-main {
+    flex-direction: column;
+    align-items: center;
+  }
+  .water-stats {
+    width: 100%;
+  }
+  .med-stats-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .mstat {
+    padding: 10px 6px;
+  }
+  .mstat-num {
+    font-size: 24px;
+  }
+  .mstat-label {
+    font-size: 11px;
+  }
+  .life-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-overview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── MOBILE SMALL (below 360px) ── */
+@media (max-width: 359px) {
+  .page-wrap {
+    padding: 8px;
+    padding-bottom: 75px;
+  }
+  .hero-card {
+    padding: 14px 10px;
+    border-radius: 14px;
+  }
+  .greet {
+    font-size: 17px;
+  }
+  .hero-acts .btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .score-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .sv {
+    font-size: 16px;
+  }
+  .badges-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .life-snapshot {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .nav-i {
+    padding: 4px 6px;
+    min-width: 44px;
+  }
+  .nav-i span:first-child {
+    font-size: 16px;
+  }
+  .nav-i span:last-child {
+    font-size: 8px;
+  }
+  .admin-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── LANDSCAPE MOBILE FIX ─── */
+@media (max-height: 500px) and (orientation: landscape) {
+  .auth-screen {
+    padding: 12px;
+  }
+  .auth-card {
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+  .hero-card {
+    padding: 16px;
+  }
+  .hero-r {
+    display: none;
+  }
+  .modal-box {
+    max-height: 85vh;
+  }
+}
+
+/* ─── HOVER STATES (touch devices skip) ─── */
+@media (hover: hover) {
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sh-md);
+    border-color: var(--pri);
+  }
+  .score-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sh-sm);
+  }
+  .upcoming-item:hover {
+    border-color: var(--pri);
+    box-shadow: 0 0 0 2px var(--pri-l);
+  }
+  .todo-item:hover {
+    border-color: var(--pri);
+    background: var(--bg-h);
+  }
+  .ls-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sh-sm);
+  }
+  .nav-i:hover {
+    transform: translateX(2px);
+  }
+}
+
+/* ─── TOUCH DEVICE OPTIMIZATIONS ─── */
+@media (hover: none) {
+  .hc-acts {
+    opacity: 1 !important;
+  }
+  .gc-acts {
+    opacity: 1 !important;
+  }
+  .med-info-acts {
+    opacity: 1 !important;
+  }
+  .dc {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* ─── PRINT STYLES ─── */
+@media print {
+  .sidebar, .topbar, .burger, .modal-overlay,
+  .toast, .splash-screen, .btn {
+    display: none !important;
+  }
+  .main {
+    margin-left: 0 !important;
+  }
+  .page-wrap {
+    padding: 0 !important;
+  }
+  .hero-card {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+  }
+}

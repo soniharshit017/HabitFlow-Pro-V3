@@ -494,7 +494,7 @@
       HF.normalizeDB();
       baseInitApp();
       const adminButton = $('btn-admin') || $('btn-admin-panel');
-      if(adminButton) adminButton.style.display = HF.isAdmin() ? 'inline-flex' : 'none';
+      if(adminButton) adminButton.style.display = 'inline-flex';
       HF.refreshAll();
     },
     renderSidebarUser: function(){
