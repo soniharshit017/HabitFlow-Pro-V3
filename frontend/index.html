@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="enhance.css?v=3.1"/>
   <link rel="stylesheet" href="waterStyles.css?v=3.1"/>
   <link rel="stylesheet" href="medicineStyles.css?v=3.1"/>
+  <link rel="stylesheet" href="goalStyles.css?v=4.0"/>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -802,7 +803,7 @@
       <a href="#" class="nav-i active" data-s="dashboard"><span>🏠</span><span>Dashboard</span></a>
       <a href="#" class="nav-i" data-s="tracker"><span>📅</span><span>Tracker</span></a>
       <a href="#" class="nav-i" data-s="timeline"><span>⏱️</span><span>Timeline</span></a>
-      <a href="#" class="nav-i" data-s="goals" style="display:none !important;"><span>🎯</span><span>Goals</span></a>
+      <a href="#" class="nav-i" data-s="goals"><span>🎯</span><span>Goals</span></a>
       <a href="#" class="nav-i" data-s="todo"><span>✅</span><span>To-Do</span></a>
       <a href="#" class="nav-i" data-s="matrix"><span>🧠</span><span>Matrix</span></a>
       <a href="#" class="nav-i" data-s="analytics"><span>📊</span><span>Analytics</span></a>
@@ -997,45 +998,15 @@
       <!-- ═══ GOALS ═══ -->
       <section id="sec-goals" class="sec">
         <div class="section-hdr">
-          <h2 class="sec-ttl">🎯 Goals</h2>
-          <button class="btn btn-primary btn-sm" id="btn-add-goal">+ Add Goal</button>
+          <h2 class="sec-ttl">🎯 Goals & Productivity</h2>
+          <button class="btn btn-primary" onclick="HFGoals.openGoalModal()">+ New Goal</button>
         </div>
-        <div id="goals-grid" class="goals-grid"></div>
+        <div id="goals-grid-new" class="goals-grid-new"></div>
       </section>
 
       <!-- ═══ GOAL DETAIL VIEW ═══ -->
       <section id="sec-goal-detail" class="sec">
-        <div class="section-hdr">
-          <button class="btn btn-ghost" onclick="goTo('goals')">← Back to Goals</button>
-          <div style="flex:1"></div>
-          <button class="btn btn-primary btn-sm" id="btn-gd-edit">✏️ Edit Goal</button>
-        </div>
-        
-        <div id="gd-header" class="gd-header" style="background:var(--bg2); padding:var(--s5); border-radius:var(--r-lg); margin-bottom:var(--s5);">
-           <!-- Header details injected here -->
-        </div>
-
-        <div class="form-grid-2">
-          <!-- Tasks Section -->
-          <div class="gd-card" style="background:var(--bg2); padding:var(--s5); border-radius:var(--r-lg);">
-            <div class="section-hdr"><h3 class="sec-ttl">✅ Goal Tasks</h3></div>
-            <div class="gd-task-add" style="display:flex; gap:8px; margin-bottom:16px;">
-              <input type="text" id="gd-new-task" class="form-input" placeholder="New task..." style="flex:1"/>
-              <input type="date" id="gd-new-task-date" class="form-input" style="width:130px"/>
-              <button class="btn btn-primary" id="btn-gd-add-task">+</button>
-            </div>
-            <div id="gd-tasks-list" class="todo-list-wrap"></div>
-          </div>
-
-          <!-- Timeline & Tracker -->
-          <div class="gd-card" style="background:var(--bg2); padding:var(--s5); border-radius:var(--r-lg);">
-             <div class="section-hdr"><h3 class="sec-ttl">⏱️ Task Timeline</h3></div>
-             <div id="gd-timeline" class="timeline-wrap" style="max-height:200px; overflow-y:auto;"></div>
-             
-             <div class="section-hdr" style="margin-top:24px"><h3 class="sec-ttl">📊 Tracker & Notifications</h3></div>
-             <div id="gd-notifications" class="gd-notifs" style="color:var(--ts); font-size:14px; line-height:1.6;"></div>
-          </div>
-        </div>
+        <!-- Kept here for view routing, but actual detail uses the modal: goal-detail-modal-new -->
       </section>
 
       <!-- ═══ TO-DO ═══ -->
@@ -1182,9 +1153,161 @@
 <script src="notifications.js?v=3.1"></script>
 <script src="profiles.js?v=3.1"></script>
 <!-- <script src="goals.js?v=3.1"></script> -->
+<script src="goals2.js?v=4.0"></script>
 <script src="waterTracker.js?v=3.1"></script>
 <script src="medicineTracker.js?v=3.1"></script>
 <script src="timeline.js?v=3.1"></script>
 <script src="admin.js?v=3.1"></script>
+<!-- ═════ PREMIUM GOAL MODALS ═════ -->
+
+<!-- 1. Add/Edit Goal Modal -->
+<div id="gam-overlay" class="gam-overlay">
+  <div class="gam-box">
+    <h2 class="gam-title" id="gam-title">Create Premium Goal</h2>
+    
+    <div class="gam-field">
+      <label class="gam-label">Goal Title</label>
+      <input type="text" id="gam-title-inp" class="gm-input" placeholder="e.g. Learn React Native" />
+    </div>
+    
+    <div class="gam-field">
+      <label class="gam-label">Description (optional)</label>
+      <textarea id="gam-desc" class="gm-input" rows="2" placeholder="Why is this important?"></textarea>
+    </div>
+    
+    <div class="gam-row">
+      <div>
+        <label class="gam-label">Emoji Icon</label>
+        <input type="text" id="gam-emoji" class="gm-input" value="🎯" />
+      </div>
+      <div>
+        <label class="gam-label">Priority</label>
+        <select id="gam-priority" class="gm-select" style="width:100%">
+          <option value="high">High Priority</option>
+          <option value="medium" selected>Medium Priority</option>
+          <option value="low">Low Priority</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="gam-row">
+      <div>
+        <label class="gam-label">Target Deadline</label>
+        <input type="date" id="gam-deadline" class="gm-input" />
+      </div>
+      <div>
+        <label class="gam-label">Status</label>
+        <select id="gam-status" class="gm-select" style="width:100%">
+          <option value="active" selected>Active</option>
+          <option value="paused">Paused</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="gam-field">
+      <label class="gam-label">Reward (optional)</label>
+      <input type="text" id="gam-reward" class="gm-input" placeholder="How will you celebrate?" />
+    </div>
+    
+    <div class="gam-actions">
+      <button class="gam-btn-cancel" onclick="HFGoals.closeGoalModal()">Cancel</button>
+      <button class="gam-btn-save" id="btn-gam-save">Save Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Goal Detail Modal -->
+<div id="goal-detail-modal-new" class="goal-modal-overlay">
+  <div class="goal-modal-box">
+    
+    <div class="gm-header">
+      <div class="gm-header-top">
+        <div id="gmd-emoji" class="gm-emoji">🎯</div>
+        <div class="gm-title-wrap">
+          <h2 id="gmd-title" class="gm-title">Goal Title</h2>
+          <div id="gmd-meta" class="gm-meta"></div>
+        </div>
+        <button class="gm-close-btn" onclick="HFGoals.closeGoalDetail()">✕</button>
+      </div>
+      
+      <div class="gm-progress-row">
+        <div class="gm-progress-label">Progress</div>
+        <div class="gm-progress-outer">
+          <div id="gmd-progress-fill" class="gm-progress-inner" style="width:0%"></div>
+        </div>
+        <div id="gmd-progress-pct" class="gm-progress-pct">0%</div>
+      </div>
+    </div>
+    
+    <div class="gm-tabs">
+      <button class="gm-tab active" data-tab="tasks" onclick="HFGoals.switchTab('tasks')">✅ Tasks</button>
+      <button class="gm-tab" data-tab="tracker" onclick="HFGoals.switchTab('tracker')">📊 Tracker</button>
+      <button class="gm-tab" data-tab="notes" onclick="HFGoals.switchTab('notes')">📝 Notes</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary btn-sm" style="margin-bottom:8px;" onclick="HFGoals.toggleAddTaskForm()">+ Add Task</button>
+    </div>
+    
+    <div class="gm-body">
+      <!-- Tasks Tab -->
+      <div id="gmp-tasks" class="gm-panel active">
+        <div id="gmd-add-task-form" class="gm-add-task-form" style="display:none;">
+          <div class="gm-add-task-row">
+            <input type="text" id="gmd-t-title" class="gm-input" placeholder="Task description..." style="font-weight: 500;" />
+          </div>
+          <div class="gm-add-task-row" style="margin-top:-2px; margin-bottom:12px;">
+            <input type="text" id="gmd-t-note-title" class="gm-input" placeholder="Note Title (Optional)..." style="font-size:12px; padding:8px 12px;" />
+            <input type="text" id="gmd-t-note-desc" class="gm-input" placeholder="Note Details (Optional)..." style="font-size:12px; padding:8px 12px;" />
+          </div>
+          <div class="gm-add-task-row">
+            <select id="gmd-t-freq" class="gm-select" onchange="HFGoals.previewNextDate()">
+              <option value="none">One-time Task</option>
+              <option value="daily">Daily</option>
+              <option value="1week">Once a week</option>
+              <option value="2week">Twice a week</option>
+              <option value="10days">Once in 10 days</option>
+              <option value="15days">Once in 15 days</option>
+              <option value="monthly">Once a month</option>
+            </select>
+            <select id="gmd-t-prio" class="gm-select">
+              <option value="high">High Priority</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low Priority</option>
+            </select>
+            <input type="date" id="gmd-t-start" class="gm-input" onchange="HFGoals.previewNextDate()" style="max-width:140px" title="Start Date" />
+            <button class="btn btn-primary" id="gmd-t-btn" onclick="HFGoals.saveTask()">Add Task</button>
+          </div>
+          <div id="gmd-t-date-preview" style="font-size: 12px; color: var(--pri, #4F8EF7); margin-top: -4px; margin-bottom: 10px; font-weight: 500; display: none;"></div>
+        </div>
+        <div id="gmd-tasks-list"></div>
+      </div>
+      
+      <!-- Tracker Tab -->
+      <div id="gmp-tracker" class="gm-panel">
+        <div class="gm-stats-grid">
+          <div class="gm-stat-box"><div id="gmd-stat-tasks" class="gm-stat-num">0</div><div class="gm-stat-label">Total Tasks</div></div>
+          <div class="gm-stat-box"><div id="gmd-stat-rec" class="gm-stat-num">0</div><div class="gm-stat-label">Recurring</div></div>
+          <div class="gm-stat-box"><div id="gmd-stat-done" class="gm-stat-num">0</div><div class="gm-stat-label">Done Today</div></div>
+          <div class="gm-stat-box"><div id="gmd-stat-hits" class="gm-stat-num">0</div><div class="gm-stat-label">Total Hits</div></div>
+        </div>
+        
+        <div class="gm-calendar-wrap">
+          <div class="gm-calendar-title">Last 14 Days Consistency</div>
+          <div id="gmd-cal-grid" class="gm-cal-grid" style="grid-template-columns: repeat(14, 1fr);"></div>
+        </div>
+      </div>
+      
+      <!-- Notes Tab -->
+      <div id="gmp-notes" class="gm-panel">
+        <div class="gm-add-task-row" style="margin-bottom:20px;">
+          <input type="text" id="gmd-note-inp" class="gm-input" placeholder="Log progress, blockers, or thoughts..." />
+          <button class="btn btn-primary" onclick="HFGoals.saveNote()">Post</button>
+        </div>
+        <div id="gmd-timeline" class="gm-timeline"></div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

@@ -19,17 +19,10 @@ function uid_user(){ const u=getCU(); return u?u.id:''; }
 function getAllUpcoming(){
   let items=[];
 
-  // Goal tasks
-  const goals=(window.HF&&window.HF.GoalManager&&window.HF.GoalManager._getGoals?window.HF.GoalManager._getGoals():[])||[];
-  const uid_=uid_user();
-  goals.forEach(g=>{
-    if(g.status==='completed') return;
-    if(g.deadline){ items.push({type:'goal', title:g.title, date:g.deadline, time:'23:59', icon:'🎯', color:'#3B82F6', sub:'Goal deadline'}); }
-    const tasks=(window.HF&&window.HF.GoalManager&&window.HF.GoalManager._getGoalTasks?window.HF.GoalManager._getGoalTasks(g.id):[])||[];
-    tasks.filter(t=>t.status!=='done').forEach(t=>{
-      items.push({type:'task', title:t.title, date:t.startDate||getToday(), time:t.time||'09:00', icon:t.emoji||'✅', color:'#60A5FA', sub:'Goal: '+g.title});
-    });
-  });
+  // Goal tasks (via new HFGoals system)
+  if (window.HFGoals && window.HFGoals.getTimelineItems) {
+    items = items.concat(window.HFGoals.getTimelineItems());
+  }
 
   // Water reminders
   const wt=(window.HF&&window.HF.WaterTracker&&window.HF.WaterTracker.getWaterTimelineItems?window.HF.WaterTracker.getWaterTimelineItems():[])||[];
