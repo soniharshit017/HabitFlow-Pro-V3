@@ -503,8 +503,8 @@
       const profile = HF.getProfile(currentUser.id) || HF.buildProfileFromUser(currentUser);
       const statusMarkup = [
         HF.renderRolePill(currentUser.role),
-        profile.verified ? '<span class="status-pill status-approved">Verified</span>' : '<span class="status-pill status-pending">Unverified</span>',
-      ].join('');
+        profile.verified ? '<span class="status-pill status-approved">Verified</span>' : (currentUser.role === 'super_admin' ? '' : '<span class="status-pill status-pending">Unverified</span>'),
+      ].filter(Boolean).join('');
       $('sidebar-user').innerHTML = `
         <div class="sidebar-user-card">
           <div class="sidebar-user-avatar">
