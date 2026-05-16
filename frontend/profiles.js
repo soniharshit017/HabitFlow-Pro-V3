@@ -58,6 +58,10 @@
             <input type="password" id="reg-pass" class="form-input" placeholder="Choose a password"/>
           </div>
           <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            <input type="password" id="reg-pass-confirm" class="form-input" placeholder="Confirm your password"/>
+          </div>
+          <div class="form-group">
             <label class="form-label">Profile Photo *</label>
             <input type="file" id="reg-photo" class="form-input" accept="image/*"/>
           </div>
@@ -98,13 +102,25 @@
               <option value="admin">Request Admin Account</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="reg-admin-note-group" style="display: none;">
             <label class="form-label">Admin Request Note</label>
             <input type="text" id="reg-admin-note" class="form-input" placeholder="Why do you need admin access?"/>
           </div>
         </div>
         <div id="reg-err" class="auth-err hidden"></div>
         <button class="btn btn-primary w-full" id="btn-register">Create Profile</button>`;
+        
+      const roleChoice = document.getElementById('reg-role-choice');
+      const noteGroup = document.getElementById('reg-admin-note-group');
+      if (roleChoice && noteGroup) {
+        roleChoice.addEventListener('change', function() {
+          if (this.value === 'admin') {
+            noteGroup.style.display = 'flex';
+          } else {
+            noteGroup.style.display = 'none';
+          }
+        });
+      }
     }
 
     if(nav && !nav.querySelector('[data-s="profile"]')){
@@ -162,8 +178,27 @@
               <input type="email" id="pf-email" class="form-input"/>
             </div>
             <div class="form-group">
-              <label class="form-label">Password</label>
-              <input type="password" id="pf-password" class="form-input" placeholder="Leave blank to keep current password"/>
+              <label class="form-label">New Password</label>
+              <div class="pass-field-wrap">
+                <input type="password" id="pf-password" class="form-input" placeholder="Leave blank to keep" oninput="const v=$('pf-verify-fields'); if(this.value.trim()){ v.classList.remove('hidden'); }else{ v.classList.add('hidden'); }"/>
+                <button type="button" class="pass-toggle-btn" onclick="togglePass('pf-password', this)">👁️</button>
+              </div>
+            </div>
+            <div class="form-group" id="pf-confirm-wrap">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" id="pf-password-confirm" class="form-input" placeholder="Confirm new password"/>
+            </div>
+            <div id="pf-verify-fields" class="hidden" style="background:var(--bg-s); padding:12px; border-radius:var(--r-md); border:1.5px dashed var(--bd); margin-bottom:16px;">
+              <p style="font-size:12px; font-weight:bold; margin-bottom:8px; color:var(--pri);">⚠️ Identity Verification Required</p>
+              <p style="font-size:11px; color:var(--ts); margin-bottom:12px;">Confirm your details to save new password.</p>
+              <div class="form-group" style="margin-bottom:8px;">
+                <label class="form-label" style="font-size:10px;">Verification Username</label>
+                <input type="text" id="pf-v-user" class="form-input sm" placeholder="Your username"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:10px;">Verification Email</label>
+                <input type="email" id="pf-v-email" class="form-input sm" placeholder="Your email"/>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Profile Photo</label>
@@ -200,7 +235,9 @@
               <textarea id="pf-about" class="form-input" rows="3" style="resize:vertical"></textarea>
             </div>
           </div>
-          <div id="pf-help" class="profile-form-note"></div>
+          <div id="pf-help" class="profile-form-note" style="margin-top:12px; font-size:12px; color:var(--ts); border-top:1px solid var(--bd); padding-top:12px;">
+            <strong>Security Note:</strong> If you provide a new password, you must fill the <b>Verification</b> fields above and match your registered <b>Birth Date</b>.
+          </div>
           <div class="modal-footer">
             <button class="btn btn-ghost" id="pf-cancel">Cancel</button>
             <button class="btn btn-primary" id="pf-save">Save Profile</button>
@@ -218,6 +255,7 @@
       mobileNumber: $('reg-mobile').value.trim(),
       email: $('reg-email').value.trim(),
       password: $('reg-pass').value.trim(),
+      passwordConfirm: $('reg-pass-confirm').value.trim(),
       profilePhoto: await HF.readFileAsDataUrl(photo),
       address: $('reg-address').value.trim(),
       birthDate: $('reg-birth').value,
@@ -283,18 +321,22 @@
 
     // Try to register via backend API for persistence
     if (window.HFApi && window.HFApi.register) {
+      const { password, ...profileData } = payload;
       window.HFApi.register(
         payload.fullName,
         payload.email,
         payload.username,
-        payload.password
+        payload.password,
+        profileData
       ).then(res => {
         if (res && !res.error && res.token) {
           window.HFApi.setToken(res.token);
-          console.log('[HF] User registered via API successfully.');
+          console.log('[HF] User registered with full profile successfully.');
+          // Now save the rest of the DB if needed
+          HF.saveState();
         }
       }).catch(err => {
-        console.warn('[HF] API registration fallback failed:', err);
+        console.warn('[HF] API registration failed:', err);
       });
     }
 
@@ -480,6 +522,7 @@
       mobileNumber: $('pf-mobile').value.trim(),
       email: $('pf-email').value.trim(),
       password: $('pf-password').value.trim(),
+      passwordConfirm: $('pf-password-confirm').value.trim(),
       profilePhoto: nextPhoto,
       address: $('pf-address').value.trim(),
       birthDate: $('pf-birth').value,
@@ -494,7 +537,11 @@
     const current = HF.getCurrentUser();
     const profile = HF.getProfile(current.id);
     const payload = await HF.collectProfileModalData();
-    const { password, ...profileData } = payload;
+    const { password, passwordConfirm, ...profileData } = payload;
+    if(password && password !== passwordConfirm){
+      toast('Passwords do not match.');
+      return;
+    }
     const error = HF.validateProfilePayload(payload, false);
     if(error){
       toast(error);
@@ -515,6 +562,25 @@
 
     const direct = HF.isAdmin() || profile.allowDirectEdit || !HF.isProfileComplete(profile);
     if(direct){
+      // 1. If password is being changed, verify Triple Credentials via specialized API
+      if (password) {
+        const vUser  = $('pf-v-user').value.trim();
+        const vEmail = $('pf-v-email').value.trim();
+        const vDob   = $('pf-birth').value;
+        
+        if(!vUser || !vEmail || !vDob){
+          toast('Error: Verification fields are required for password change.');
+          return;
+        }
+
+        const resetRes = await window.HFApi.updatePasswordVerified(vEmail, vUser, vDob, password);
+        if (resetRes.error) {
+          toast('Verification Error: ' + resetRes.error);
+          return;
+        }
+      }
+
+      // 2. Proceed with other profile updates
       HF.getDB().profiles[current.id] = {
         ...profile,
         ...profileData,
@@ -523,7 +589,7 @@
       };
       current.name = profileData.fullName;
       current.username = profileData.username;
-      if(password) current.password = password;
+      
       HF.logAction && HF.logAction('Profile updated', 'Profile details saved directly.', {
         targetUserId: current.id,
         userName: profileData.fullName,
@@ -533,7 +599,7 @@
       closeM('profile-modal');
       core.getFns().renderSidebarUser();
       HF.renderProfileSection();
-      toast('Profile saved.');
+      toast(password ? 'Profile & Password updated.' : 'Profile saved.');
       return;
     }
 
@@ -611,6 +677,11 @@
 
       $('btn-register').addEventListener('click', async () => {
         const payload = await HF.collectRegistrationData();
+        if(payload.password !== payload.passwordConfirm){
+          regError.textContent = 'Passwords do not match.';
+          regError.classList.remove('hidden');
+          return;
+        }
         const error = HF.validateProfilePayload(payload, true);
         if(error){
           regError.textContent = error;

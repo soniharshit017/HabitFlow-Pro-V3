@@ -251,6 +251,14 @@ textarea {
   background: var(--bg-h)
 }
 
+.auth-form-wrap .form-group:nth-child(2) {
+  margin-top: 20px;
+}
+
+#btn-login, #btn-register {
+  margin-top: 24px;
+}
+
 .auth-form-wrap {
   display: none
 }
@@ -5527,3 +5535,8 @@ a,
 input#search {
   text-align: center !important;
 }
+/* --- 14. MODAL OVERLAY FIX --- */
+.modal-overlay { position: fixed; inset: 0; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; padding: 24px; z-index: 9999; opacity: 0; transition: opacity 0.3s ease; }
+.modal-overlay.open { display: flex !important; opacity: 1 !important; }
+.modal-box { background: #ffffff; width: 100%; max-width: 480px; border-radius: 24px; padding: 32px; position: relative; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+[data-theme='dark'] .modal-box { background: #111827; border-color: rgba(255, 255, 255, 0.1); }

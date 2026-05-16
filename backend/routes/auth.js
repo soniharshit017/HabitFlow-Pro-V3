@@ -33,8 +33,11 @@ router.post('/login', async (req, res) => {
 
     const match = await user.comparePassword(password);
     if (!match) {
+      console.warn(`[Auth] Password mismatch for user: ${username}`);
       return res.status(401).json({ error: 'Invalid username or password.' });
     }
+
+    console.log(`[Auth] Login successful: ${username} (${user.appId})`);
 
     // Status check (mirrors frontend users.js logic)
     if (user.status === 'pending') {
@@ -60,10 +63,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/register ─────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, username, password } = req.body;
+    const { name, email, username, password, profile } = req.body;
 
     if (!name || !email || !username || !password) {
       return res.status(400).json({ error: 'All fields (name, email, username, password) are required.' });
@@ -120,7 +122,7 @@ router.post('/register', async (req, res) => {
       profileNotes: [],
     });
 
-    // Initialize profile in GlobalData
+    // Initialize profile in GlobalData with provided profile data
     const global = await GlobalData.findOne({ singleton: 'main' });
     if (global) {
       if (!global.profiles) global.profiles = {};
@@ -129,14 +131,14 @@ router.post('/register', async (req, res) => {
         fullName: name.trim(),
         username: username.toLowerCase().trim(),
         email: email.toLowerCase().trim(),
-        mobileNumber: '',
-        address: '',
-        birthDate: '',
-        gender: '',
-        emergencyContact: '',
-        occupation: '',
-        aboutMe: '',
-        profilePhoto: '',
+        mobileNumber: profile?.mobileNumber || '',
+        address:      profile?.address      || '',
+        birthDate:    profile?.birthDate    || '',
+        gender:       profile?.gender       || '',
+        emergencyContact: profile?.emergencyContact || '',
+        occupation:   profile?.occupation   || '',
+        aboutMe:      profile?.aboutMe      || '',
+        profilePhoto: profile?.profilePhoto || '',
         verified: false,
         status: 'active',
         createdAt: Date.now(),
@@ -164,6 +166,82 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ error: `That ${field} is already in use.` });
     }
     res.status(500).json({ error: 'Server error during registration.' });
+  }
+});
+
+// ─── POST /api/auth/reset-password (Recovery via Triple Verification) ───────
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { username, email, birthDate, newPassword } = req.body;
+
+    if (!username || !email || !birthDate || !newPassword) {
+      return res.status(400).json({ error: 'Username, Email, DOB, and new password are required.' });
+    }
+
+    // 1. Find user by email first
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) return res.status(404).json({ error: 'User not found. Please register.' });
+
+    // 2. Verify Username and DOB
+    const global = await GlobalData.findOne({ singleton: 'main' });
+    const profile = global?.profiles?.[user.appId];
+
+    const usernameMatches = (user.username === username.toLowerCase().trim());
+    const dobMatches = (profile?.birthDate === birthDate);
+
+    if (!usernameMatches || !dobMatches) {
+      console.warn(`[Recovery] Failed verification for ${email}. Username/DOB mismatch.`);
+      return res.status(401).json({ error: 'Verification failed. Incorrect Username or Date of Birth.' });
+    }
+
+    // 3. Update Password
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'Password reset successful. You can now login.' });
+
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Server error during password reset.' });
+  }
+});
+
+// ─── POST /api/auth/update-password-verified (Auth + Triple Verification) ───
+router.post('/update-password-verified', protect, async (req, res) => {
+  try {
+    const { email, username, birthDate, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!email || !username || !birthDate || !newPassword) {
+      return res.status(400).json({ error: 'All verification fields are required.' });
+    }
+
+    const user = await User.findOne({ appId: userId });
+    const global = await GlobalData.findOne({ singleton: 'main' });
+    const profile = global?.profiles?.[userId];
+
+    if (user.email !== email.toLowerCase().trim() || 
+        user.username !== username.toLowerCase().trim() || 
+        profile.birthDate !== birthDate) {
+      return res.status(401).json({ error: 'Verification failed. Credentials do not match our records.' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'Password updated successfully.' });
+
+  } catch (err) {
+    console.error('Update password error:', err);
+    res.status(500).json({ error: 'Server error during password update.' });
   }
 });
 

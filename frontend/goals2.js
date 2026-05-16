@@ -140,12 +140,13 @@
       }
     });
     
-    const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-    
     let goals = getGoals();
     const g = goals.find(x => x.id === gid);
-    if (g) {
-      g.progress = pct;
+    if (!g) return 0;
+
+    const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : (g.manualProgress !== undefined ? g.manualProgress : (g.progress || 0));
+    
+    g.progress = pct;
       if (pct >= 100 && g.status !== 'completed') {
         g.status = 'completed';
         toast('🎉 Goal Achieved: ' + g.title);
@@ -154,7 +155,6 @@
       }
       setGoals(goals);
       sv();
-    }
     return pct;
   }
 
@@ -325,6 +325,36 @@
     
     $('gmd-progress-pct').textContent = (g.progress || 0) + '%';
     $('gmd-progress-fill').style.width = (g.progress || 0) + '%';
+    
+    // Manual progress slider for goals without tasks
+    const tasks = getTasks(gid);
+    const manualRow = $('gmd-manual-progress-row');
+    if (manualRow) {
+      if (tasks.length === 0) {
+        manualRow.style.display = 'flex';
+        const slider = $('gmd-manual-slider');
+        if (slider) {
+          slider.value = g.progress || 0;
+          slider.oninput = (e) => {
+            const v = e.target.value;
+            $('gmd-progress-pct').textContent = v + '%';
+            $('gmd-progress-fill').style.width = v + '%';
+          };
+          slider.onchange = (e) => {
+            const goals = getGoals();
+            const idx = goals.findIndex(x => x.id === gid);
+            if (idx >= 0) {
+              goals[idx].manualProgress = parseInt(e.target.value);
+              setGoals(goals);
+              recalcProgress(gid);
+              renderGoals();
+            }
+          };
+        }
+      } else {
+        manualRow.style.display = 'none';
+      }
+    }
     
     switchTab('tasks');
     $('goal-detail-modal-new').classList.add('open');
@@ -624,8 +654,62 @@
   }
 
   function renderAnalytics() {
-    // Analytics logic placeholder - visual representation in HTML
-    renderTracker(); // Use tracker data to fill out charts if needed
+    const g = getGoal(_currentGoalId); if (!g) return;
+    renderTracker(); // Heatmap
+    
+    const chartWrap = $('goal-progress-chart');
+    if (!chartWrap) return;
+
+    // Generate progress data for last 14 days
+    const days = [];
+    const now = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+
+    // Progress logic: cumulative based on tracker or tasks
+    // For simplicity, we'll use the tracker logs + task completion dates
+    const tracker = g.tracker || {};
+    const tasks = g.tasks || [];
+    const total = tasks.length || 1;
+    let pct = tasks.length > 0 ? Math.round((tasks.filter(t => t.done).length / total) * 100) : (g.progress || 0);
+
+    const dataPts = days.map(day => {
+      const doneBefore = tasks.filter(t => t.done && t.completedAt && t.completedAt.slice(0, 10) <= day).length;
+      let pct = tasks.length > 0 ? Math.round((doneBefore / total) * 100) : (g.progress || 0);
+      
+      // Add boost if tracker has entry for this day
+      if (tracker[day]) pct = Math.min(100, pct + 5); 
+      return pct;
+    });
+
+    const w = 100 / (dataPts.length - 1);
+    const polyline = dataPts.map((v, i) => `${(i * w).toFixed(1)},${(100 - v).toFixed(1)}`).join(' ');
+    
+    chartWrap.innerHTML = `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%; height:160px; overflow:visible;">
+        <defs>
+          <linearGradient id="goalGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--pri)" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="var(--pri)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M 0 100 L ${polyline} L 100 100 Z" fill="url(#goalGrad)" />
+        <polyline points="${polyline}" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        ${dataPts.map((v, i) => `
+          <circle cx="${(i * w).toFixed(1)}" cy="${(100 - v).toFixed(1)}" r="2" fill="var(--pri)">
+            <title>${days[i]}: ${v}%</title>
+          </circle>
+        `).join('')}
+      </svg>
+      <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:10px; color:var(--ts);">
+        <span>${new Date(days[0]).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+        <span>${new Date(days[6]).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+        <span>Today</span>
+      </div>
+    `;
   }
 
   /* ═══════════════════════════════════════════
@@ -633,18 +717,40 @@
   ═══════════════════════════════════════════ */
   function renderNotes() {
     const notes = getNotes(activeGoalId);
+    const tasks = getTasks(activeGoalId);
+    const g = getGoals().find(x => x.id === activeGoalId);
     const tl = $('gmd-timeline');
     if (!tl) return;
     
-    if (!notes.length) {
-      tl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--ts);">No notes or logs yet.</div>`;
+    // Combine notes and task history for a unified timeline
+    let items = notes.map(n => ({ type: 'note', text: n.text, date: n.date, icon: '📝' }));
+    
+    tasks.forEach(t => {
+      if (t.freq && t.freq !== 'none' && t.history) {
+        Object.keys(t.history).forEach(ds => {
+          items.push({ type: 'history', text: `Completed recurring task: ${t.title}`, date: ds, icon: '🔄' });
+        });
+      } else if (t.status === 'done' && t.created) {
+        items.push({ type: 'history', text: `Finished task: ${t.title}`, date: t.created, icon: '✅' });
+      }
+    });
+
+    if (g && g.created) {
+      items.push({ type: 'milestone', text: 'Goal started!', date: g.created, icon: '🎯' });
+    }
+
+    // Sort by date descending
+    items.sort((a, b) => b.date.localeCompare(a.date));
+
+    if (!items.length) {
+      tl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--ts);">No history or notes yet. Start by adding a task or a note!</div>`;
       return;
     }
     
-    tl.innerHTML = notes.slice().reverse().map(n => `
-      <div class="gm-tl-item">
+    tl.innerHTML = items.map(n => `
+      <div class="gm-tl-item ${n.type}">
         <div class="gm-tl-date">${fmt(n.date)}</div>
-        <div class="gm-tl-text">${esc(n.text)}</div>
+        <div class="gm-tl-text">${n.icon} ${esc(n.text)}</div>
       </div>
     `).join('');
   }

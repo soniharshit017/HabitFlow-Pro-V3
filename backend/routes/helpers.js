@@ -141,13 +141,13 @@ async function saveDB(frontendDB, requestingUser) {
         });
       } else if (isAdmin && u.username && u.password) {
         // New user created via frontend approval — create in MongoDB
-        const hashedPassword = await bcrypt.hash(u.password, 12);
+        // Password hashing is handled by the User model's pre-save hook.
         try {
           await User.create({
             appId: u.id,
             username: (u.username || '').toLowerCase().trim(),
             email: u.email || `${(u.username || u.id)}@habitflow.local`,
-            password: hashedPassword,
+            password: u.password, 
             name: u.name || u.username,
             role: u.role || 'user',
             status: u.status || 'active',
