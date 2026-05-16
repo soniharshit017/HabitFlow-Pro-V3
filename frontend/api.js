@@ -8,7 +8,8 @@
 
   // Use same-origin API when served from a web server (including the backend itself).
   // Only use hardcoded dev URL when opened directly via file:// protocol.
-  const API_BASE = window.location.protocol === 'file:'
+  // Detect backend URL. In dev, we usually run backend on 2002.
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
     ? 'http://localhost:2002/api'
     : '/api';
 
@@ -50,6 +51,8 @@
 
     if (!response.ok && !data.error) {
       data.error = `Server error (${response.status})`;
+    } else if (response.ok && path === '/auth/login') {
+      console.log(`[Auth] Login successful`);
     }
     return data;
   }
@@ -83,10 +86,10 @@
      * Register a new user.
      * Returns: { token, db, user } | { error }
      */
-    register(name, email, username, password) {
+    register(name, email, username, password, profile = {}) {
       return request('/auth/register', {
         method:   'POST',
-        body:     { name, email, username, password },
+        body:     { name, email, username, password, profile },
         skipAuth: true,
       });
     },
@@ -106,6 +109,21 @@
     logout() {
       if (!this.hasToken()) return Promise.resolve({ success: true });
       return request('/auth/logout', { method: 'POST' }).catch(() => {});
+    },
+
+    resetPassword(username, email, birthDate, newPassword) {
+      return request('/auth/reset-password', {
+        method:   'POST',
+        body:     { username, email, birthDate, newPassword },
+        skipAuth: true,
+      });
+    },
+
+    updatePasswordVerified(email, username, birthDate, newPassword) {
+      return request('/auth/update-password-verified', {
+        method:   'POST',
+        body:     { email, username, birthDate, newPassword },
+      });
     },
 
     // ── State Sync ────────────────────────────────────────────────────────

@@ -25,6 +25,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "blob:"],
       connectSrc: ["'self'"],
     },
@@ -82,7 +83,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // ─── Serve Frontend (Production) ─────────────────────────────────────────────
-// In production the frontend folder sits one level up
 app.use(express.static(path.join(__dirname, '..', 'frontend'), {
   etag: false,
   setHeaders: (res, path) => {
@@ -92,6 +92,12 @@ app.use(express.static(path.join(__dirname, '..', 'frontend'), {
     res.setHeader('Surrogate-Control', 'no-store');
   }
 }));
+
+// Explicitly serve recovery.html before wildcard
+app.get('/recovery.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'recovery.html'));
+});
+
 app.get('*', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');

@@ -243,17 +243,10 @@
     return [];
   };
 
+  // Local credential check removed — all auth is now handled via HFApi (backend)
   HF.findCredentialUser = function(identity, password){
-    const lower = identity.trim().toLowerCase();
-    return HF.getDB().users.find(user => {
-      const profile = HF.getProfile(user.id) || {};
-      const matchesIdentity = [
-        user.username,
-        profile.email,
-        profile.mobileNumber,
-      ].filter(Boolean).some(value => String(value).toLowerCase() === lower);
-      return matchesIdentity && user.password === password;
-    }) || null;
+    console.warn('HF.findCredentialUser is deprecated. Use backend auth instead.');
+    return null;
   };
 
   HF.isProfileComplete = function(profile){

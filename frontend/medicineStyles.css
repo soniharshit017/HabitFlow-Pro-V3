@@ -116,5 +116,13 @@
   .med-card-actions { flex-direction: column; }
   .med-btn { width: 100%; }
   .med-stock { width: 100%; margin-top: 8px; justify-content: center; }
-  .med-th-habit, .med-td-habit { position: static; min-width: auto; border-right: 1px solid var(--bd); }
+  .med-th-habit, .med-td-habit { 
+    position: sticky; 
+    left: 0; 
+    background: var(--bg-c); 
+    z-index: 2; 
+    border-right: 2px solid var(--bd);
+    min-width: 120px;
+    box-shadow: 4px 0 8px rgba(0,0,0,0.05);
+  }
 }

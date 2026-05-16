@@ -33,9 +33,85 @@
     "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "1200" }
   }
   </script>
+  <script>
+    // ── Modal helpers (available immediately, before any JS file loads) ──────
+    window.openM = function(id) {
+      var m = document.getElementById(id);
+      if (m) { m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); }
+    };
+    window.closeM = function(id) {
+      var m = document.getElementById(id);
+      if (m) { m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
+    };
+
+    // ── Wire auth buttons as soon as DOM is ready ────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+      // Forgot Password → open modal
+      var btnForgot = document.getElementById('btn-forgot-password');
+      if (btnForgot) btnForgot.addEventListener('click', function() { openM('recovery-modal'); });
+
+      // Close / Cancel → close modal
+      ['btn-close-recovery', 'btn-cancel-recovery'].forEach(function(id) {
+        var btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', function() { closeM('recovery-modal'); });
+      });
+
+      // Verify & Reset button
+      var btnReset = document.getElementById('btn-do-recovery');
+      if (btnReset) {
+        btnReset.addEventListener('click', async function() {
+          var email  = (document.getElementById('rec-email')  || {}).value || '';
+          var user   = (document.getElementById('rec-user')   || {}).value || '';
+          var dob    = (document.getElementById('rec-dob')    || {}).value || '';
+          var pass   = (document.getElementById('rec-pass')   || {}).value || '';
+          var cpass  = (document.getElementById('rec-pass-confirm') || {}).value || '';
+          var errEl  = document.getElementById('rec-err');
+
+          var showErr = function(msg) {
+            if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+          };
+
+          email = email.trim(); user = user.trim(); pass = pass.trim(); cpass = cpass.trim();
+
+          if (!email || !user || !dob || !pass || !cpass) { showErr('Please fill all 5 fields.'); return; }
+          if (pass !== cpass) { showErr('Passwords do not match.'); return; }
+          if (pass.length < 8) { showErr('Password must be at least 8 characters.'); return; }
+
+          btnReset.disabled = true; btnReset.textContent = 'Verifying…';
+
+          try {
+            var res = await fetch('/api/auth/reset-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: user, email: email, birthDate: dob, newPassword: pass })
+            });
+            var data = await res.json();
+            btnReset.disabled = false; btnReset.textContent = 'Verify & Reset';
+
+            if (data.error) {
+              showErr(data.error);
+            } else {
+              if (errEl) errEl.classList.add('hidden');
+              closeM('recovery-modal');
+              // Clear fields
+              ['rec-email','rec-user','rec-dob','rec-pass','rec-pass-confirm'].forEach(function(fid) {
+                var f = document.getElementById(fid); if (f) f.value = '';
+              });
+              alert('\u2705 Password reset successful! Please login with your new password.');
+            }
+          } catch(e) {
+            btnReset.disabled = false; btnReset.textContent = 'Verify & Reset';
+            showErr('Server error. Make sure backend is running.');
+            console.error('[Recovery]', e);
+          }
+        });
+      }
+
+      console.log('[Bootstrap] Auth modal buttons wired.');
+    });
+  </script>
 </head>
 <body>
-  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div id="sr-announcer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <noscript>
     <div style="padding:24px;text-align:center;background:#fee2e2;color:#991b1b;border-bottom:1px solid #fca5a5;">
@@ -79,8 +155,11 @@
         <input type="password" id="login-pass" class="form-input" placeholder="Enter password" autocomplete="current-password" aria-required="true"/>
       </div>
       <div id="login-err" class="auth-err hidden" role="alert"></div>
-      <button class="btn btn-primary w-full" id="btn-login">Login →</button>
-      <div class="auth-hint">Default admin: <strong>admin / admin123</strong><br/>Default user: <strong>user / user1234</strong></div>
+      <button class="btn btn-primary w-full" id="btn-login" style="margin-bottom:16px;">Login →</button>
+      <div style="text-align:center;">
+        <button type="button" id="btn-forgot-password" style="font-size:12px; color:var(--pri); font-weight:600; background:none; border:none; cursor:pointer;">Forgot Password?</button>
+      </div>
+      <div class="auth-hint" style="margin-top:24px;">Default admin: <strong>admin / admin123</strong><br/>Default user: <strong>user / user1234</strong></div>
     </div>
 
     <!-- Register form -->
@@ -98,11 +177,55 @@
         <input type="text" id="reg-user" class="form-input" placeholder="Choose username" aria-required="true"/>
       </div>
       <div class="form-group">
+        <label for="reg-dob" class="form-label">Date of Birth</label>
+        <input type="date" id="reg-dob" class="form-input" aria-required="true"/>
+      </div>
+      <div class="form-group">
         <label for="reg-pass" class="form-label">Password</label>
         <input type="password" id="reg-pass" class="form-input" placeholder="Choose password (min 8 chars)" aria-required="true"/>
       </div>
+      <div class="form-group">
+        <label for="reg-pass-confirm" class="form-label">Confirm Password</label>
+        <input type="password" id="reg-pass-confirm" class="form-input" placeholder="Confirm your password" aria-required="true"/>
+      </div>
       <div id="reg-err" class="auth-err hidden" role="alert"></div>
       <button class="btn btn-primary w-full" id="btn-register">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ RECOVERY MODAL (body level - fixed positioning) ═══════════ -->
+<div id="recovery-modal" class="modal-overlay" style="z-index:99999;" aria-hidden="true">
+  <div class="modal-box">
+    <button class="modal-x" id="btn-close-recovery">✕</button>
+    <h3 class="modal-title">Account Recovery</h3>
+    <p style="font-size:13px; color:var(--ts); margin-bottom:20px;">Triple-Verify to reset password</p>
+
+    <div class="form-group" style="margin-bottom:15px;">
+      <label class="form-label">Email</label>
+      <input type="email" id="rec-email" class="form-input" placeholder="Registered email">
+    </div>
+    <div class="form-group" style="margin-bottom:15px;">
+      <label class="form-label">Username</label>
+      <input type="text" id="rec-user" class="form-input" placeholder="Username">
+    </div>
+    <div class="form-group" style="margin-bottom:15px;">
+      <label class="form-label">Date of Birth</label>
+      <input type="date" id="rec-dob" class="form-input">
+    </div>
+    <div class="form-group" style="margin-bottom:15px;">
+      <label class="form-label">New Password</label>
+      <input type="password" id="rec-pass" class="form-input" placeholder="New password (min 8 chars)">
+    </div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label class="form-label">Confirm New Password</label>
+      <input type="password" id="rec-pass-confirm" class="form-input" placeholder="Confirm new password">
+    </div>
+
+    <div id="rec-err" class="auth-err hidden" role="alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-cancel-recovery">Cancel</button>
+      <button class="btn btn-primary" id="btn-do-recovery">Verify &amp; Reset</button>
     </div>
   </div>
 </div>
@@ -1309,5 +1432,17 @@
   </div>
 </div>
 
+  <script src="api.js?v=4.9"></script>
+  <script src="script.js?v=4.9"></script>
+  <script src="users.js?v=4.9"></script>
+  <script src="logs.js?v=4.9"></script>
+  <script src="approvals.js?v=4.9"></script>
+  <script src="notifications.js?v=4.9"></script>
+  <script src="profiles.js?v=4.9"></script>
+  <script src="goals2.js?v=4.9"></script>
+  <script src="waterTracker.js?v=4.9"></script>
+  <script src="medicineTracker.js?v=4.9"></script>
+  <script src="timeline.js?v=4.9"></script>
+  <script src="admin.js?v=4.9"></script>
 </body>
 </html>

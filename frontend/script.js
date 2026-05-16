@@ -177,8 +177,15 @@ function _showLoginErr(msg){ const e=$('login-err'); e.textContent=msg; e.classL
 function _showRegErr(msg){ const e=$('reg-err'); e.textContent=msg; e.classList.remove('hidden'); }
 
 function initAuth(){
+  console.log('[Auth] Initializing Auth System...');
+
+  // ── Recovery Modal Open/Close ─────────────────────────────────────────────
+  $('btn-forgot-password')?.addEventListener('click', () => openM('recovery-modal'));
+  $('btn-close-recovery')?.addEventListener('click', () => closeM('recovery-modal'));
+  $('btn-cancel-recovery')?.addEventListener('click', () => closeM('recovery-modal'));
+
   // ── Login ────────────────────────────────────────────────────────────────
-  $('btn-login').addEventListener('click',async()=>{
+  $('btn-login')?.addEventListener('click',async()=>{
     const u=$('login-user').value.trim(), p=$('login-pass').value.trim();
     if(!u||!p){ _showLoginErr('Username and password are required.'); return; }
     const btn=$('btn-login');
@@ -197,18 +204,18 @@ function initAuth(){
       _showLoginErr('Could not connect to server. Is the backend running?');
     }
   });
-  $('login-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') $('btn-login').click(); });
+  $('login-pass')?.addEventListener('keydown',e=>{ if(e.key==='Enter') $('btn-login')?.click(); });
 
   // ── Register ─────────────────────────────────────────────────────────────
-  $('btn-register').addEventListener('click',async()=>{
-    const name=$('reg-name').value.trim(), email=$('reg-email').value.trim(), u=$('reg-user').value.trim(), p=$('reg-pass').value.trim();
-    if(!name||!email||!u||!p){ _showRegErr('All fields (name, email, username, password) are required.'); return; }
+  $('btn-register')?.addEventListener('click',async()=>{
+    const name=$('reg-name').value.trim(), email=$('reg-email').value.trim(), u=$('reg-user').value.trim(), dob=$('reg-dob').value, p=$('reg-pass').value.trim(), cp=$('reg-pass-confirm').value.trim();
+    if(!name||!email||!u||!dob||!p||!cp){ _showRegErr('All fields are required.'); return; }
+    if(p!==cp){ _showRegErr('Passwords do not match.'); return; }
     if(p.length<8){ _showRegErr('Password must be at least 8 characters.'); return; }
-    if(!/^\S+@\S+\.\S+$/.test(email)){ _showRegErr('Please provide a valid email address.'); return; }
     const btn=$('btn-register');
     btn.disabled=true; btn.textContent='Creating account…';
     try{
-      const res=await window.HFApi.register(name,email,u,p);
+      const res=await window.HFApi.register(name,email,u,p, { birthDate: dob });
       btn.disabled=false; btn.textContent='Create Account →';
       if(res.error){ _showRegErr(res.error); return; }
       $('reg-err').classList.add('hidden');
@@ -230,7 +237,49 @@ function initAuth(){
     $('tab-'+t.dataset.tab).classList.add('active');
   }));
 
-  $('btn-logout').addEventListener('click',logout);
+  $('btn-logout')?.addEventListener('click',logout);
+
+  // Recovery logic for restored modal
+  $('btn-do-recovery')?.addEventListener('click', async () => {
+    console.log('[Recovery] Button clicked');
+    
+    const email = $('rec-email')?.value.trim();
+    const user  = $('rec-user')?.value.trim();
+    const dob   = $('rec-dob')?.value;
+    const pass  = $('rec-pass')?.value.trim();
+    const cpass = $('rec-pass-confirm')?.value.trim();
+    const err   = $('rec-err');
+
+    if(!email || !user || !dob || !pass || !cpass) {
+      if(err) { err.textContent = 'Please fill all 5 fields.'; err.classList.remove('hidden'); }
+      return;
+    }
+
+    if(pass !== cpass) {
+      if(err) { err.textContent = 'Passwords do not match.'; err.classList.remove('hidden'); }
+      return;
+    }
+
+    const btn = $('btn-do-recovery');
+    if(btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
+
+    try {
+      const res = await window.HFApi.resetPassword(user, email, dob, pass);
+      if(btn) { btn.disabled = false; btn.textContent = 'Verify & Reset'; }
+      
+      if(res.error) {
+        if(err) { err.textContent = res.error; err.classList.remove('hidden'); }
+      } else {
+        alert('✅ Password reset successful! Please login now.');
+        if(err) err.classList.add('hidden');
+        closeM('recovery-modal');
+      }
+    } catch (e) {
+      if(btn) { btn.disabled = false; btn.textContent = 'Verify & Reset'; }
+      if(err) { err.textContent = 'Server error. Try again.'; err.classList.remove('hidden'); }
+      console.error('[Recovery] Error:', e);
+    }
+  });
 }
 
 function loginUser(user){
@@ -1734,6 +1783,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 
   bindEvents();
+
 
   console.log('%c🚀 HabitFlow Pro v3 Ready (MERN Edition)','color:#4F8EF7;font-size:18px;font-weight:900');
   console.log('%c  Alt+1-9: Navigate | Alt+N: Add Habit','color:#888;font-size:12px');
