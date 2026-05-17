@@ -90,6 +90,7 @@
     const config = {
       method:  opts.method  || 'GET',
       headers: opts.skipAuth ? { 'Content-Type': 'application/json' } : authHeaders(),
+      cache: 'no-store',
     };
     if (opts.body) config.body = JSON.stringify(opts.body);
 

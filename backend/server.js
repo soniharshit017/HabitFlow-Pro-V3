@@ -100,6 +100,13 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.text({ type: 'text/plain', limit: '10mb' }));
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
+// Prevent browser caching for all API responses
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  next();
+});
+
 app.use('/api/auth',  authLimiter, authRoutes);
 
 // Handle sendBeacon requests (Content-Type: text/plain) for state sync on tab close
