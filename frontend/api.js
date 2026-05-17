@@ -125,7 +125,7 @@
     },
     autoLogin() {
       if (!this.hasToken()) return Promise.resolve({ error: 'No token.' });
-      return request('/auth/me');
+      return request(`/auth/me?_cb=${Date.now()}`);
     },
     logout() {
       disconnectSocket();
@@ -140,7 +140,7 @@
     },
 
     // ── State Sync ────────────────────────────────────────────────────────
-    getState()    { return request('/state'); },
+    getState()    { return request(`/state?_cb=${Date.now()}`); },
     saveState(db) { return request('/state', { method: 'POST', body: { db } }); },
   };
 
