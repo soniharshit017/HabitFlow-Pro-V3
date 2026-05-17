@@ -191,10 +191,10 @@ async function seedDefaultUsers() {
 
     // Seed default admin (only in development; use env vars or manual creation in production)
     const adminExists = await User.findOne({ username: 'admin' });
-    if (!adminExists && process.env.NODE_ENV !== 'production') {
+    if (!adminExists) {
       const adminId = 'admin';
       await User.create({
-        appId: adminId, username: 'admin', password: 'admin123',
+        appId: adminId, username: 'admin', password: 'admin@Harshit123',
         email: 'admin@habitflow.local',
         name: 'Admin', role: 'super_admin', status: 'active',
         createdAt: Date.now(), updatedAt: Date.now(),
