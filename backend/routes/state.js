@@ -107,11 +107,25 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ error: 'Invalid state payload.' });
     }
     await saveDB(db, req.user);
+
+    // 🔴 Real-time sync: notify all other devices of this user
+    const io = req.app.get('io');
+    if (io) {
+      const socketId = req.headers['x-socket-id'] || null;
+      // Emit to user's room but exclude the sender's socket
+      if (socketId) {
+        io.to(`user:${req.user.id}`).except(socketId).emit('state:sync', { userId: req.user.id });
+      } else {
+        io.to(`user:${req.user.id}`).emit('state:sync', { userId: req.user.id });
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error('POST /api/state error:', err);
     res.status(500).json({ error: 'Failed to save state.' });
   }
 });
+
 
 module.exports = router;

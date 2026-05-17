@@ -2,17 +2,52 @@
 
 require('dotenv').config();
 
+const http       = require('http');
 const express    = require('express');
 const cors       = require('cors');
 const helmet     = require('helmet');
 const compression= require('compression');
 const rateLimit  = require('express-rate-limit');
 const path       = require('path');
+const { Server } = require('socket.io');
+const jwt        = require('jsonwebtoken');
 const connectDB  = require('./config/db');
 const authRoutes = require('./routes/auth');
 const stateRoutes= require('./routes/state');
 
 const app = express();
+const server = http.createServer(app);
+
+// ─── Socket.IO Real-Time Sync ──────────────────────────────────────────────────
+const io = new Server(server, {
+  cors: { origin: '*', methods: ['GET', 'POST'] },
+  path: '/socket.io'
+});
+
+// JWT auth middleware for socket
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) return next(new Error('Authentication error'));
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.userId = decoded.id;
+    next();
+  } catch (e) {
+    next(new Error('Invalid token'));
+  }
+});
+
+io.on('connection', (socket) => {
+  // Each user joins their own private room
+  socket.join(`user:${socket.userId}`);
+  console.log(`[Socket] User ${socket.userId} connected (${socket.id})`);
+  socket.on('disconnect', () => {
+    console.log(`[Socket] User ${socket.userId} disconnected (${socket.id})`);
+  });
+});
+
+// Export io so routes can emit events
+app.set('io', io);
 
 // ─── Connect Database ────────────────────────────────────────────────────────
 connectDB().then(() => seedDefaultUsers());
@@ -113,10 +148,11 @@ app.use((err, req, res, next) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`\n🚀 HabitFlow Pro backend running on http://localhost:${PORT}`);
   console.log(`   Frontend: http://localhost:${PORT}`);
-  console.log(`   API:      http://localhost:${PORT}/api\n`);
+  console.log(`   API:      http://localhost:${PORT}/api`);
+  console.log(`   Socket:   ws://localhost:${PORT}\n`);
 });
 
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────

@@ -299,8 +299,26 @@ function loginUser(user){
   if(!DB.xp[CU.id]) DB.xp[CU.id]=0;
   if(!DB.earnedBadges[CU.id]) DB.earnedBadges[CU.id]=[];
   if(!DB.pomoSessions[CU.id]) DB.pomoSessions[CU.id]=0;
+  
+  if (window.HFApi && window.HFApi.connectSocket) {
+    window.HFApi.connectSocket();
+  }
+
   save(); initApp();
 }
+
+window.applyServerDB = function(newDB) {
+  if (!newDB) return;
+  DB = { ...DB, ...newDB };
+  // Update localStorage boot cache
+  try { localStorage.setItem(SK, JSON.stringify(DB)); } catch(e) {}
+  
+  // Refresh UI seamlessly if a user is logged in
+  if (CU) {
+    initApp(); // Redraws current section based on updated DB
+    showToast('App synced with server');
+  }
+};
 
 function logout(){
   const doLogout=()=>{
