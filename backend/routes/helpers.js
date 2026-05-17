@@ -126,17 +126,20 @@ async function saveDB(frontendDB, requestingUser) {
 
       if (targetUser) {
         // Existing user — update
+        const updateFields = {
+          name: u.name || u.username,
+          updatedAt: Date.now(),
+        };
+        // ONLY admins can modify role and status
+        if (isAdmin) {
+          if (u.role) updateFields.role = u.role;
+          if (u.status) updateFields.status = u.status;
+        }
+
         userOps.push({
           updateOne: {
             filter: { appId: u.id },
-            update: {
-              $set: {
-                role:      u.role      || 'user',
-                status:    u.status    || 'active',
-                name:      u.name      || u.username,
-                updatedAt: Date.now(),
-              },
-            },
+            update: { $set: updateFields },
           },
         });
       } else if (isAdmin && u.username && u.password) {

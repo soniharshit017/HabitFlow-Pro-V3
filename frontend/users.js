@@ -265,18 +265,12 @@
 
     DB.users = DB.users.map((user, index) => {
       const next = { ...user };
-      if(next.username === 'admin' && next.role === 'admin') next.role = 'super_admin';
-      if(index === 0 && next.username === 'admin' && !HF.getDB().users.some(item => item.role === 'super_admin')) next.role = 'super_admin';
-      if(!next.role) next.role = index === 0 ? 'super_admin' : 'user';
+      if(!next.role) next.role = 'user';
       if(!next.status) next.status = 'active';
       if(!next.createdAt) next.createdAt = Date.now();
       next.updatedAt = Date.now();
       return next;
     });
-
-    if(!DB.users.some(user => user.role === 'super_admin') && DB.users[0]){
-      DB.users[0].role = 'super_admin';
-    }
 
     DB.users.forEach(user => {
       const existingProfile = DB.profiles[user.id] || {};
