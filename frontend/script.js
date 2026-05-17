@@ -384,7 +384,11 @@ function goTo(s){
   $a('.sec').forEach(x=>x.classList.remove('active'));
   $('sec-'+s).classList.add('active');
   $a('.nav-i').forEach(n=>n.classList.toggle('active',n.dataset.s===s));
-  if(window.innerWidth<=1023) $('sidebar').classList.remove('open');
+  if(window.innerWidth<=1023) {
+    $('sidebar').classList.remove('open');
+    const ov = $('sidebar-overlay');
+    if (ov) ov.classList.remove('active');
+  }
   if(s==='analytics') renderAnalytics();
   if(s==='badges') renderBadges();
   if(s==='journal') renderJournal();
@@ -1423,7 +1427,21 @@ function showDailyReminder(){
 function bindEvents(){
   // Nav
   $a('.nav-i').forEach(n=>n.addEventListener('click',e=>{ e.preventDefault(); goTo(n.dataset.s); }));
-  $('burger').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
+  // Burger: toggle sidebar + overlay on mobile
+  $('burger').addEventListener('click', () => {
+    const sidebar = $('sidebar');
+    const overlay = $('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
+  });
+  // Clicking overlay closes sidebar
+  const sideOverlay = $('sidebar-overlay');
+  if (sideOverlay) {
+    sideOverlay.addEventListener('click', () => {
+      $('sidebar').classList.remove('open');
+      sideOverlay.classList.remove('active');
+    });
+  }
   $('theme-tog').addEventListener('click',toggleTheme);
 
   // Habit modal

@@ -5540,3 +5540,221 @@ input#search {
 .modal-overlay.open { display: flex !important; opacity: 1 !important; }
 .modal-box { background: #ffffff; width: 100%; max-width: 480px; border-radius: 24px; padding: 32px; position: relative; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
 [data-theme='dark'] .modal-box { background: #111827; border-color: rgba(255, 255, 255, 0.1); }
+
+/* ═══════════════════════════════════════════════════════════
+   📱 COMPREHENSIVE MOBILE RESPONSIVE FIX - HabitFlow Pro V3
+   Covers: Sidebar, Navbar, Forms, Tables, Cards, Modals
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Global box-sizing fix ── */
+*, *::before, *::after { box-sizing: border-box; }
+body { overflow-x: hidden; }
+
+/* ══ TABLET (≤ 768px) ══ */
+@media (max-width: 768px) {
+
+  /* Sidebar: slide off-screen by default, show on .open */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 240px !important;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Semi-transparent overlay behind open sidebar */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 999;
+  }
+  .sidebar-overlay.active { display: block; }
+
+  /* Burger button always visible on mobile */
+  .burger {
+    display: flex !important;
+    cursor: pointer;
+    z-index: 1100;
+  }
+
+  /* Main content takes full width */
+  .main { margin-left: 0 !important; width: 100% !important; }
+
+  /* Topbar adjustments */
+  .topbar {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .topbar-r .search-wrap { max-width: 160px; }
+
+  /* Page padding */
+  .page-wrap { padding: 12px; }
+
+  /* Hero card stacks vertically */
+  .hero-card { flex-direction: column; gap: 12px; }
+  .hero-r { justify-content: center; }
+
+  /* Grids → single column */
+  .score-row,
+  .stats-grid,
+  .form-grid-2,
+  .form-grid-3 { grid-template-columns: 1fr 1fr; }
+
+  .matrix-grid { grid-template-columns: 1fr; }
+  .life-snapshot { grid-template-columns: repeat(3, 1fr); }
+
+  /* Tables: horizontal scroll */
+  .table-wrap, .users-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table { min-width: 560px; }
+
+  /* Modals: full-width on mobile */
+  .modal-box, .modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 20px 16px !important;
+    margin: 0 auto;
+  }
+
+  /* Registration / auth form */
+  #auth-section .form-group,
+  .reg-form .form-group { width: 100%; }
+  #auth-section input,
+  .reg-form input,
+  .reg-form select,
+  .reg-form textarea { width: 100% !important; max-width: 100% !important; }
+
+  /* Admin requests note field */
+  #admin-note-group { width: 100% !important; }
+
+  /* Tracker bar wraps on small screens */
+  .tracker-bar { flex-wrap: wrap; gap: 6px; }
+
+  /* Habit list cards */
+  .hc-row { flex-wrap: wrap; gap: 6px; }
+  .hc-acts { opacity: 1; }
+
+  /* Button groups */
+  .btn-group { flex-wrap: wrap; }
+
+  /* Goal cards */
+  .goal-card-grid { grid-template-columns: 1fr; }
+
+  /* Section headers stack */
+  .section-hdr { flex-wrap: wrap; gap: 8px; }
+  .section-hdr .btn { font-size: 12px; padding: 6px 10px; }
+}
+
+/* ══ MOBILE (≤ 480px) ══ */
+@media (max-width: 480px) {
+
+  /* Topbar: hide search bar to save space */
+  .topbar-r .search-wrap { display: none; }
+  .topbar-title { font-size: 15px; }
+
+  /* Full-width grids */
+  .score-row,
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+
+  .life-snapshot { grid-template-columns: repeat(2, 1fr); }
+  .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+  .span-2, .span-3 { grid-column: auto; }
+
+  /* Hero */
+  .hero-card { padding: 16px 12px; text-align: center; }
+  .greet { font-size: 18px; }
+  .quote { font-size: 11px; }
+
+  /* Cards */
+  .stat-card, .score-card { padding: 10px 8px; }
+  .sv, .sc-val { font-size: 18px; }
+
+  /* Pomodoro timer center */
+  .pomo-timer { font-size: 40px !important; }
+
+  /* Modal footer: stack buttons */
+  .modal-footer, .modal-foot {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .modal-footer .btn,
+  .modal-foot .btn { width: 100%; justify-content: center; }
+
+  /* Auth section */
+  #auth-section { padding: 16px 12px; }
+  .auth-tabs .tab { font-size: 13px; padding: 8px 12px; }
+
+  /* Notifications panel */
+  .notif-panel { width: 90vw !important; right: 5vw !important; }
+
+  /* Water tracker */
+  .water-actions { flex-direction: column; }
+  .water-actions .btn { width: 100%; }
+
+  /* Medicine tracker */
+  .med-header { flex-direction: column; gap: 8px; }
+
+  /* Profile section */
+  .profile-header { flex-direction: column; text-align: center; }
+  .profile-avatar { margin: 0 auto; }
+
+  /* Admin panel tables */
+  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Goals tabs */
+  .gd-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+  .gd-tab { display: inline-flex; }
+
+  /* Floating action buttons */
+  .fab { width: 46px; height: 46px; font-size: 18px; }
+}
+
+/* ══ SMALL MOBILE (≤ 375px) ══ */
+@media (max-width: 375px) {
+
+  .page-wrap { padding: 10px 8px; }
+
+  /* Topbar */
+  .topbar { padding: 0 8px; gap: 4px; }
+  .topbar-title { font-size: 14px; }
+
+  /* Stats */
+  .score-row,
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  /* Life snapshot */
+  .life-snapshot { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+
+  /* Grids */
+  .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Font sizes */
+  .greet { font-size: 16px; }
+  .section-ttl { font-size: 15px; }
+
+  /* Buttons */
+  .btn { padding: 7px 12px; font-size: 12px; }
+
+  /* Nav items */
+  .nav-item span.nav-label { font-size: 11px; }
+
+  /* Journal */
+  .journal-toolbar { flex-wrap: wrap; gap: 4px; }
+
+  /* Habit cells in tracker */
+  .tracker-cell { min-width: 28px; height: 28px; font-size: 10px; }
+
+  /* Modal */
+  .modal-box, .modal {
+    padding: 16px 12px !important;
+    border-radius: 16px !important;
+  }
+}
+
