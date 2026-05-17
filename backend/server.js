@@ -16,6 +16,9 @@ const authRoutes = require('./routes/auth');
 const stateRoutes= require('./routes/state');
 
 const app = express();
+
+// Trust proxy for Render deployment to get correct client IP for rate limiting
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // ─── Socket.IO Real-Time Sync ──────────────────────────────────────────────────
@@ -78,7 +81,7 @@ const apiLimiter = rateLimit({
 });
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 10 : 100,
+  max: process.env.NODE_ENV === 'production' ? 50 : 100,
   message: { error: 'Too many authentication attempts. Please try again later.' },
   skip: (req) => process.env.NODE_ENV !== 'production' && req.method === 'GET',
 });
